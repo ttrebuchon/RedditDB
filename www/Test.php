@@ -274,7 +274,7 @@ $someComment = $reddit->GetComment("5ar029", "d9ikjkg");
 
 WriteDump("Some Comment: ", $someComment);
 
-$all = $reddit->GetSubredditListing("all");
+$all = $reddit->GetSubredditListing("all", 5);
 foreach ($all as $post)
 {
     if (!$client->PostStoredByID($post->id))
@@ -294,9 +294,11 @@ $all_subs = array_unique($all_subs);
 
 $authors = array();
 
+
+
 foreach ($all_subs as $sub)
 {
-    $posts = $reddit->GetSubredditListing($sub);
+    $posts = $reddit->GetSubredditListing($sub, 3);
     foreach ($posts as $post)
     {
         if (!$client->PostStoredByID($post->id))

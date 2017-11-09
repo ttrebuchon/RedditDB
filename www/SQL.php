@@ -318,8 +318,8 @@ class RedditSQLClient
         }
 
         $query = 
-            "INSERT INTO " . $this->schema->DatabaseName . "." .
-            $this->schema->PostsName . " (
+            "INSERT INTO " . $this->schema->PostsTable()
+            . " (
                 id,
                 author_id,
                 title,
@@ -461,8 +461,8 @@ class RedditSQLClient
         }
 
         $query = 
-            "INSERT INTO " . $this->schema->DatabaseName . "." .
-            $this->schema->SubredditsName . " (
+            "INSERT INTO " . $this->schema->SubredditsTable() . "."
+            . " (
                 subreddit_id,
                 subreddit_name
             ) VALUES (
@@ -497,8 +497,8 @@ class RedditSQLClient
         static $query = null;
         if ($query == null) {
             $query = $this->connection->prepare(
-                "SELECT COUNT(*) FROM " . $this->schema->DatabaseName
-                . "." . $this->schema->SubredditsName . " WHERE subreddit_name = ?"
+                "SELECT COUNT(*) FROM " . $this->schema->SubredditsTable()
+                . " WHERE subreddit_name = ?"
             ) or Exc($this->connection->error_get_last);
         }
             
@@ -517,8 +517,8 @@ class RedditSQLClient
         }
 
         $query = 
-            "INSERT INTO " . $this->schema->DatabaseName . "." .
-            $this->schema->CommentsName . " (
+            "INSERT INTO " . $this->schema->CommentsTable()
+            . " (
                 id,
                 author_id,
                 text,
@@ -583,8 +583,8 @@ class RedditSQLClient
         static $query = null;
         if ($query == null) {
             $query = $this->connection->prepare(
-                "SELECT COUNT(*) FROM " . $this->schema->DatabaseName
-                . "." . $this->schema->CommentsName . " WHERE id = ?"
+                "SELECT COUNT(*) FROM " . $this->schema->CommentsTable()
+                . " WHERE id = ?"
             ) or SQL_Exc($this->connection);
         }
             
@@ -629,21 +629,17 @@ class RedditSQLClient
         static $query = null;
         if ($query == null) {
             $query = $this->connection->prepare(
-                "SELECT * FROM " . $this->schema->DatabaseName
-                . "." . $this->schema->CommentsName . " JOIN "
-                . $this->schema->DatabaseName . "." . $this->schema->UsersName
-                . " ON " . $this->schema->DatabaseName
-                . "." . $this->schema->CommentsName . ".author_id = "
-                . $this->schema->DatabaseName . "." . $this->schema->UsersName
-                . ".id "
-                . " JOIN " . $this->schema->DatabaseName . "." . $this->schema->PostsName
-                . " ON " . $this->schema->PostsName . ".id = " . $this->schema->CommentsName
-                . ".post_id"
-                . " JOIN " . $this->schema->DatabaseName . "." . $this->schema->SubredditsName
-                . " ON " . $this->schema->SubredditsName . "." . "subreddit_id = "
-                . $this->schema->PostsName . ".subreddit_id"
-                . " WHERE " . $this->schema->DatabaseName
-                . "." . $this->schema->CommentsName . ".id = ?"
+                "SELECT * FROM " . $this->schema->CommentsTable()
+                . " JOIN "
+                . $this->schema->UsersTable()
+                . " ON " . $this->schema->CommentsTable("author_id")
+                . " = " . $this->schema->UsersTable("id")
+                . " JOIN " . $this->schema->PostsTable()
+                . " ON " . $this->schema->PostsTable("id") . " = " . $this->schema->CommentsTable("post_id")
+                . " JOIN " . $this->schema->SubredditsTable()
+                . " ON " . $this->schema->SubredditsTable("subreddit_id") . " = "
+                . $this->schema->PostsTable("subreddit_id")
+                . " WHERE " . $this->schema->CommentsTable("id") . " = ?"
             ) or SQL_Exc($this->connection);
         }
             
@@ -761,6 +757,46 @@ class DBSchema
         //         FOREIGN KEY (comment_id) REFERENCES " . $this->CommentsName . "(id)
         //     )";
         // $client->query($posts_comments_create_query) or Exc($client->error_get_last);
+    }
+
+    public function CommentsTable($column = null)
+    {
+        $str = $this->DatabaseName . "." . $this->CommentsName;
+        if ($column != null)
+        {
+            $str = $str . "." . $column;
+        }
+        return $str;
+    }
+
+    public function PostsTable($column = null)
+    {
+        $str = $this->DatabaseName . "." . $this->PostsName;
+        if ($column != null)
+        {
+            $str = $str . "." . $column;
+        }
+        return $str;
+    }
+
+    public function UsersTable($column = null)
+    {
+        $str = $this->DatabaseName . "." . $this->UsersName;
+        if ($column != null)
+        {
+            $str = $str . "." . $column;
+        }
+        return $str;
+    }
+
+    public function SubredditsTable($column = null)
+    {
+        $str = $this->DatabaseName . "." . $this->SubredditsName;
+        if ($column != null)
+        {
+            $str = $str . "." . $column;
+        }
+        return $str;
     }
 
     public function drop($client)
