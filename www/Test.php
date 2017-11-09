@@ -277,10 +277,7 @@ WriteDump("Some Comment: ", $someComment);
 $all = $reddit->GetSubredditListing("all", 5);
 foreach ($all as $post)
 {
-    if (!$client->PostStoredByID($post->id))
-    {
-        $client->AddPost($reddit, $post);
-    }
+    $client->AddPost($reddit, $post);
 }
 
 $all_subs = array();

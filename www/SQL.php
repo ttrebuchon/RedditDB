@@ -275,8 +275,8 @@ class RedditSQLClient
         }
 
         $query =
-            "INSERT INTO " . $this->schema->DatabaseName . "." .
-            $this->schema->UsersName . " (
+            "REPLACE INTO " . $this->schema->UsersTable()
+            . " (
                 id,
                 user_name,
                 utc_created,
@@ -318,7 +318,7 @@ class RedditSQLClient
         }
 
         $query = 
-            "INSERT INTO " . $this->schema->PostsTable()
+            "REPLACE INTO " . $this->schema->PostsTable()
             . " (
                 id,
                 author_id,
@@ -461,7 +461,7 @@ class RedditSQLClient
         }
 
         $query = 
-            "INSERT INTO " . $this->schema->SubredditsTable() . "."
+            "REPLACE INTO " . $this->schema->SubredditsTable()
             . " (
                 subreddit_id,
                 subreddit_name
@@ -517,7 +517,7 @@ class RedditSQLClient
         }
 
         $query = 
-            "INSERT INTO " . $this->schema->CommentsTable()
+            "REPLACE INTO " . $this->schema->CommentsTable()
             . " (
                 id,
                 author_id,
