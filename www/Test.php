@@ -319,9 +319,7 @@ foreach ($all_subs as $sub)
 $userSample = $client->GetUsers(100);
 WriteDump("Users list: ", $userSample);
 
-WriteDump("User Comments JSON: ", $reddit->GetUserComments($userSample[0]));
 
-return;
 
 $authors = array_unique($authors);
 

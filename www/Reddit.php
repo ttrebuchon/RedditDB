@@ -384,8 +384,7 @@ class Reddit
     function GetUserComments($name, $sorting = "new", $count = 10)
     {
         $json = $this->GetUserCommentsJSON($name, $sorting, $count);
-        WriteDump("json: ", $json);
-        return CommentListing::FromJson($json);
+        return CommentListing::FromJson($json["data"]["children"]);
     }
 
     function GetComment($postID, $commentID)
