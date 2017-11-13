@@ -296,22 +296,32 @@ $authors = array();
 foreach ($all_subs as $sub)
 {
     $posts = $reddit->GetSubredditListing($sub, 3);
+    $top_posts = $reddit->GetSubredditListing($sub . "/top", 10);
+    $posts = array_merge($posts, $top_posts);
+    $ids = array_column($posts, "id");
+    $ids = array_diff($ids, $client->PostsStored_ByID($ids));
+    $posts = array_filter($posts, function($post) use ($ids) {
+        return in_array($post->id, $ids);
+    });
     foreach ($posts as $post)
     {
-        if (!$client->PostStoredByID($post->id))
+        $client->AddPost($reddit, $post);
+        array_push($authors, $post->author);
+        $post->getComments();
+        $client->AddCommentsListing($post->comments);
+        if (count($post->comments->comments) > 0)
         {
-            $client->AddPost($reddit, $post);
-            array_push($authors, $post->author);
-            $post->getComments();
-            $client->AddCommentsListing($post->comments);
-            if (count($post->comments->comments) > 0)
-            {
-                $someComment = $client->GetCommentByID($post->comments->comments[0]->id);
-            }
-            
+            $someComment = $client->GetCommentByID($post->comments->comments[0]->id);
         }
     }
 }
+
+$userSample = $client->GetUsers(100);
+WriteDump("Users list: ", $userSample);
+
+WriteDump("User Comments JSON: ", $reddit->GetUserComments($userSample[0]));
+
+return;
 
 $authors = array_unique($authors);
 
@@ -325,3 +335,6 @@ foreach ($authors as $author)
     $reddit->GetUserInfo($author, $author_id, $utc_timestamp, $link_score, $comment_score);
     $client->AddUser($author_id, $author, $utc_timestamp, $link_score, $comment_score);
 }
+
+
+

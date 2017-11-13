@@ -320,7 +320,20 @@ class Reddit
             }
         }
 
+        if (!array_key_exists("data", $json))
+        {
+            WriteDump("Weird JSON: ", $json);
+            throw new Exception("Weird JSON!");
+        }
+
         $json = $json["data"];
+
+        if (!array_key_exists("id", $json))
+        {
+            WriteDump("Weird JSON: ", $json);
+            throw new Exception("Weird JSON!");
+        }
+
         $id = $json["id"];
         $utc_timestamp = $json["created_utc"];
         $link_score = $json["link_karma"];
@@ -371,6 +384,8 @@ class Reddit
     function GetUserComments($name, $sorting = "new", $count = 10)
     {
         $json = $this->GetUserCommentsJSON($name, $sorting, $count);
+        WriteDump("json: ", $json);
+        return CommentListing::FromJson($json);
     }
 
     function GetComment($postID, $commentID)

@@ -311,6 +311,48 @@ class RedditSQLClient
         }
     }
 
+    function GetUsers($count)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $query =
+            "SELECT * FROM " . $this->schema->UsersTable();
+        if ($count > 0)
+        {
+            $query = $query . " LIMIT ?";
+        }
+
+        $stmt = $this->connection->prepare($query);
+
+        if (false === $stmt) {
+            SQL_Exc($this->connection);
+        }
+
+        if ($count > 0)
+        {
+            if (false === $stmt->bind_param("i", $count)) {
+                SQL_Exc($stmt);
+            }
+        }
+
+        
+
+        if (false === $stmt->execute()) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $result = $stmt->get_result()->fetch_all();
+
+        if (false === $result) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        //TODO: Create User data structure
+        return array_column($result, 1);
+    }
+
     function AddPost($Reddit, $post)
     {
         if (!$this->isOpen()) {
@@ -318,7 +360,7 @@ class RedditSQLClient
         }
 
         $query = 
-            "REPLACE INTO " . $this->schema->PostsTable()
+            "INSERT INTO " . $this->schema->PostsTable()
             . " (
                 id,
                 author_id,
@@ -343,7 +385,11 @@ class RedditSQLClient
                 ?,
                 ?,
                 ?
-            )";
+            ) ON DUPLICATE KEY UPDATE 
+            score = VALUES(score), 
+            permalink = VALUES(permalink),
+            text = VALUES(text),
+            text_html = VALUES(text_html)";
         
         $stmt = $this->connection->prepare($query);
 
@@ -428,7 +474,21 @@ class RedditSQLClient
             WriteDump("State: ", $this->connection->sqlstate);
             WriteDump("Error Number: ", $this->connection->errno);
             WriteDump("Query: ", $query);
+            WriteDump("Post: ", $post);
             SQL_Exc($stmt);
+        }
+    }
+
+    function AddPosts($posts)
+    {
+        $ids = array_column($posts, "id");
+        $ids = array_diff($ids, $this->PostsStored_ByID($ids));
+        $posts = array_filter($posts, function($post) use ($ids) {
+            return in_array($post->id, $ids);
+        });
+        foreach ($posts as $post)
+        {
+            $this->AddPost($post);
         }
     }
 
@@ -452,6 +512,64 @@ class RedditSQLClient
         $query->execute() or Exc($this->connection->error_get_last);
         $result = $query->get_result()->fetch_array()[0];
         return $result > 0;
+    }
+
+    function PostsStored_ByID($ids)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $len = count($ids);
+
+        if ($len <= 0) {
+            return [];
+        }
+
+        $paramString = str_repeat("s", $len);
+        $paramList = "(?";
+        for ($i = 1; $i < $len; $i = $i + 1) {
+            $paramList = $paramList . ", ?";
+        }
+        $paramList = $paramList . ")";
+
+        $query = "
+                SELECT id FROM " . $this->schema->PostsTable() . " WHERE id IN " . $paramList;
+            
+
+        $stmt = $this->connection->prepare($query);
+
+        if (false === $stmt) {
+            throw new Exception(htmlspecialchars($this->connection->error));
+        }
+
+        foreach ($ids as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($stmt, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        if (false === $stmt->execute()) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $result = $stmt->get_result()->fetch_all();
+
+        if (false === $result) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        return array_column($result, 0);
     }
 
     function AddSubreddit($id, $name)
