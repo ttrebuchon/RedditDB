@@ -74,12 +74,12 @@ class RedditSQLClient
         }
     }
 
-    function InitializeSchema()
+    function initializeSchema()
     {
         return $this->schema->Initialize($this);
     }
 
-    function DropSchema()
+    function dropSchema()
     {
         return $this->schema->Drop($this);
     }
@@ -268,14 +268,19 @@ class RedditSQLClient
         return array_column($result, 0);
     }
 
-    function AddUser($id, $name, $utc_created, $link_score, $comment_score)
+    function addUser($usr)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
         }
 
+        if ($usr === null || gettype($usr) !== 'object')
+        {
+            throw new Exception("Tried to add null user");
+        }
+
         $query =
-            "REPLACE INTO " . $this->schema->UsersTable()
+            "INSERT INTO " . $this->schema->UsersTable()
             . " (
                 id,
                 user_name,
@@ -297,11 +302,11 @@ class RedditSQLClient
         }
 
         if (false === $stmt->bind_param("ssiii",
-            $id,
-            $name,
-            $utc_created,
-            $link_score,
-            $comment_score)
+            $usr->id,
+            $usr->name,
+            $usr->utc_created,
+            $usr->link_score,
+            $usr->comment_score)
         ) {
             SQL_Exc($stmt);
         }
@@ -309,6 +314,35 @@ class RedditSQLClient
         if (false === $stmt->execute()) {
             SQL_Exc($stmt);
         }
+    }
+
+    function addUsers($users)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        
+
+        try
+        {
+            $this->startTransaction();
+
+            foreach ($users as $user)
+            {
+                if ($user !== null)
+                {
+                    $this->addUser($user);
+                }
+                
+            }
+        }
+        catch (Exception $ex)
+        {
+            $this->endTransaction();
+            throw $ex;
+        }
+        $this->endTransaction();
     }
 
     function GetUsers($count)
@@ -349,12 +383,35 @@ class RedditSQLClient
             throw new Exception(htmlspecialchars($stmt->error));
         }
 
-        //TODO: Create User data structure
-        return array_column($result, 1);
+        $users = [];
+
+        foreach ($result as $row)
+        {
+            $usr = new User();
+            $usr->name = $row[0];
+            $usr->id = $row[1];
+            $usr->utc_timestamp = $row[2];
+            $usr->link_score = $row[3];
+            $usr->comment_score = $row[4];
+            
+            array_push($users, $usr);
+        }
+
+        return $users;
     }
 
-    function AddPost($Reddit, $post)
+    function addPost($Reddit, $post)
     {
+        if ($post === null)
+        {
+            return;
+        }
+        else if ($post->id === null)
+        {
+            return;
+        }
+
+
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
         }
@@ -363,11 +420,10 @@ class RedditSQLClient
             "INSERT INTO " . $this->schema->PostsTable()
             . " (
                 id,
-                author_id,
+                author,
                 title,
                 creation_timestamp,
                 score,
-                isSelf,
                 permalink,
                 link,
                 subreddit_id,
@@ -383,7 +439,6 @@ class RedditSQLClient
                 ?,
                 ?,
                 ?,
-                ?,
                 ?
             ) ON DUPLICATE KEY UPDATE 
             score = VALUES(score), 
@@ -393,60 +448,38 @@ class RedditSQLClient
         
         $stmt = $this->connection->prepare($query);
 
-        $author_id = null;
-        if ($post->author != null)
+        if ($post->author === null)
         {
-            $author_id = $this->GetUserID($post->author);
-            if ($author_id === null)
-            {
-                $Reddit->GetUserInfo($post->author, $author_id, $author_utc_created, $author_link_score, $author_comment_score);
-                $this->AddUser($author_id, $post->author, $author_utc_created, $author_link_score, $author_comment_score);
-            }
+
+        }
+        else if (!$this->UserStored_ByName($post->author))
+        {
+            $author = $Reddit->GetUser($post->author);
+            $this->AddUser($author);
         }
 
-        if (!$this->SubredditStoredByName($post->subreddit))
+        // if ($post->subreddit_id === null || $post->subreddit === null)
+        // {
+        //     WriteDump("Post with null subreddit: ", $post);
+        // }
+
+        if (!$this->subredditStored_ByName($post->subreddit))
         {
             $this->AddSubreddit($post->subreddit_id, $post->subreddit);
         }
 
-        if ($post->isSelf)
-        {
-            $is_self = 1;
-
-            $result = $stmt->bind_param("sssiiisssss",
-                $post->id,
-                $author_id,
-                $post->title,
-                $post->utc_timestamp,
-                $post->score,
-                $is_self,
-                $post->permalink,
-                $post->link,
-                $post->subreddit_id,
-                $post->text,
-                $post->text_html
-            );
-        }
-        else
-        {
-            $text = null;
-            $html_text = null;
-            $is_self = 0;
-
-            $result = $stmt->bind_param("sssiiisssss",
-                $post->id,
-                $author_id,
-                $post->title,
-                $post->utc_timestamp,
-                $post->score,
-                $is_self,
-                $post->permalink,
-                $post->link,
-                $post->subreddit_id,
-                $text,
-                $html_text
-            );
-        }
+        $result = $stmt->bind_param("sssiisssss",
+            $post->id,
+            $post->author,
+            $post->title,
+            $post->created_utc,
+            $post->score,
+            $post->permalink,
+            $post->link,
+            $post->subreddit_id,
+            $post->text,
+            $post->text_html
+        );
 
         
 
@@ -514,7 +547,7 @@ class RedditSQLClient
         return $result > 0;
     }
 
-    function PostsStored_ByID($ids)
+    function postsStored_ByID($ids)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
@@ -572,7 +605,7 @@ class RedditSQLClient
         return array_column($result, 0);
     }
 
-    function AddSubreddit($id, $name)
+    function addSubreddit($id, $name)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
@@ -606,7 +639,7 @@ class RedditSQLClient
         }
     }
 
-    function SubredditStoredByName($name)
+    function subredditStored_ByName($name)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
@@ -628,8 +661,71 @@ class RedditSQLClient
         return $result > 0;
     }
 
-    function AddComment($comment)
+    function subredditsStored_ByName($names)
     {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $len = count($names);
+
+        if ($len <= 0) {
+            return [];
+        }
+
+        $paramString = str_repeat("s", $len);
+        $paramList = "(?";
+        for ($i = 1; $i < $len; $i = $i + 1) {
+            $paramList = $paramList . ", ?";
+        }
+        $paramList = $paramList . ")";
+
+        $query = "
+                SELECT subreddit_name FROM " . $this->schema->SubredditsTable() . " WHERE subreddit_name IN " . $paramList;
+            
+
+        $stmt = $this->connection->prepare($query);
+
+        if (false === $stmt) {
+            throw new Exception(htmlspecialchars($this->connection->error));
+        }
+
+        foreach ($names as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($stmt, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        if (false === $stmt->execute()) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $result = $stmt->get_result()->fetch_all();
+
+        if (false === $result) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        return array_column($result, 0);
+    }
+
+    function addComment($Reddit, $comment)
+    {
+        if ($comment === null)
+        {
+            return;
+        }
+
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
         }
@@ -638,7 +734,7 @@ class RedditSQLClient
             "REPLACE INTO " . $this->schema->CommentsTable()
             . " (
                 id,
-                author_id,
+                author,
                 text,
                 text_html,
                 parent_id,
@@ -662,23 +758,18 @@ class RedditSQLClient
             SQL_Exc($this->connection);
         }
 
-        $author_id = $this->GetUserID($comment->author);
-        if ($author_id === null)
+        $author_name = $comment->author;
+
+        if ($author_name === '[deleted]')
         {
-            $Reddit = new Reddit();
-            $Reddit->GetUserInfo($comment->author, $author_id, $author_utc_created, $author_link_score, $author_comment_score);
-            if ($author_id !== null)
-            {
-                $this->AddUser($author_id, $comment->author, $author_utc_created, $author_link_score, $author_comment_score);
-            }
-            
+            $author_name = null;
         }
 
         if (false === $stmt->bind_param("sssssssi",
             $comment->id,
-            $author_id,
-            $comment->body,
-            $comment->body_html,
+            $author_name,
+            $comment->text,
+            $comment->text_html,
             $comment->parent_id,
             $comment->permalink,
             $comment->post_id,
@@ -692,7 +783,7 @@ class RedditSQLClient
         }
     }
 
-    function CommentStoredByID($id)
+    function commentStoredByID($id)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
@@ -714,16 +805,119 @@ class RedditSQLClient
         return $result > 0;
     }
 
-    function AddCommentsListing($listing)
+    function commentsStored_ByID($ids)
     {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $len = count($ids);
+
+        if ($len <= 0) {
+            return [];
+        }
+
+        $paramString = str_repeat("s", $len);
+        $paramList = "(?";
+        for ($i = 1; $i < $len; $i = $i + 1) {
+            $paramList = $paramList . ", ?";
+        }
+        $paramList = $paramList . ")";
+
+        $query = "
+                SELECT id FROM " . $this->schema->CommentsTable() . " WHERE id IN " . $paramList;
+            
+
+        $stmt = $this->connection->prepare($query);
+
+        if (false === $stmt) {
+            throw new Exception(htmlspecialchars($this->connection->error));
+        }
+
+        foreach ($ids as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($stmt, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        if (false === $stmt->execute()) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $result = $stmt->get_result()->fetch_all();
+
+        if (false === $result) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        return array_column($result, 0);
+    }
+
+    function addCommentsListing($Reddit, $listing, $checkUsers = true, &$deletedUsers = [])
+    {
+        if ($checkUsers)
+        {
+            $userNames = $listing->getAuthors();
+            
+            $userNames = array_unique($userNames);
+    
+            $userNames = array_diff($userNames, $this->UsersStored_ByName($userNames));
+    
+            $users = [];
+    
+            foreach ($userNames as $name)
+            {
+                try
+                {
+                    array_push($users, $Reddit->GetUser($name));
+                }
+                catch (RedditAPIException $ex)
+                {
+                    if ($ex->errorNo === 404)
+                    {
+                        array_push($deletedUsers, $name);
+                    }
+                    else
+                    {
+                        throw $ex;
+                    }
+                }
+                
+            }
+    
+            $this->AddUsers($users);
+        }
+        
+
+        // $ids = $listing->getIDs();
+        // $ids = array_diff($ids, $this->commentsStored_ByID($ids));
+
         foreach ($listing->comments as $comment)
         {
+            if ($comment === null)
+            {
+                continue;
+            }
             if (!$this->CommentStoredByID($comment->id))
             {
-                $this->AddComment($comment);
+                if (in_array($comment->author, $deletedUsers))
+                {
+                    $comment->author = null;
+                }
+                $this->AddComment($Reddit, $comment);
                 if ($comment->replies != null)
                 {
-                    $this->AddCommentsListing($comment->replies);
+                    $this->AddCommentsListing($Reddit, $comment->replies, false, $deletedUsers);
                 }
             }
         }
@@ -750,8 +944,8 @@ class RedditSQLClient
                 "SELECT * FROM " . $this->schema->CommentsTable()
                 . " JOIN "
                 . $this->schema->UsersTable()
-                . " ON " . $this->schema->CommentsTable("author_id")
-                . " = " . $this->schema->UsersTable("id")
+                . " ON " . $this->schema->CommentsTable("author")
+                . " = " . $this->schema->UsersTable("user_name")
                 . " JOIN " . $this->schema->PostsTable()
                 . " ON " . $this->schema->PostsTable("id") . " = " . $this->schema->CommentsTable("post_id")
                 . " JOIN " . $this->schema->SubredditsTable()
@@ -780,6 +974,42 @@ class RedditSQLClient
 
         return $comment;
     }
+
+
+
+    public function startTransaction()
+    {
+        $this->connection->begin_transaction();
+    }
+
+    public function endTransaction()
+    {
+        try
+        {
+            $this->connection->commit();
+        }
+        catch (Exception $ex)
+        {
+            $this->connection->rollback();
+            throw $ex;
+        }
+        
+    }
+
+    public function rollback()
+    {
+        $this->connection->rollback();
+    }
+
+    public function disableFK()
+    {
+        $this->query('SET FOREIGN_KEY_CHECKS=0');
+    }
+
+    public function enableFK()
+    {
+        $this->query('SET FOREIGN_KEY_CHECKS=1');
+    }
 }
 
 
@@ -807,13 +1037,13 @@ class DBSchema
         $users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->DatabaseName .
         "." . $this->UsersName .
         " (
-            id VARCHAR(128) PRIMARY KEY,
-            user_name VARCHAR(20) NOT NULL,
-            utc_created TIMESTAMP NOT NULL,
-            link_score INT NOT NULL,
-            comment_score INT NOT NULL,
+            user_name VARCHAR(20) PRIMARY KEY,
+            id VARCHAR(128) DEFAULT NULL,
+            utc_created TIMESTAMP,
+            link_score INT,
+            comment_score INT,
 
-            UNIQUE(user_name)
+            UNIQUE(id)
         )";
         $client->query($users_create_query);
 
@@ -827,18 +1057,17 @@ class DBSchema
         "." . $this->PostsName .
         " (
                 id VARCHAR(128) PRIMARY KEY,
-                author_id VARCHAR(128),
+                author VARCHAR(20),
                 title TEXT NOT NULL,
                 creation_timestamp TIMESTAMP NOT NULL,
                 score INT NOT NULL,
-                isSelf BOOL NOT NULL,
                 permalink VARCHAR(2083) NOT NULL,
                 link VARCHAR(2083),
                 subreddit_id VARCHAR(128) NOT NULL,
                 text TEXT,
                 text_html TEXT,
 
-                FOREIGN KEY (author_id) REFERENCES " . $this->UsersName . "(id),
+                FOREIGN KEY (author) REFERENCES " . $this->UsersName . "(user_name),
                 FOREIGN KEY (subreddit_id) REFERENCES " . $this->SubredditsName . "(subreddit_id)
             )";
         $client->query($posts_create_query) or Exc($client->error_get_last);
@@ -849,15 +1078,15 @@ class DBSchema
         "." . $this->CommentsName .
         " (
                 id VARCHAR(128) PRIMARY KEY,
-                author_id VARCHAR(128),
-                text TEXT NOT NULL,
-                text_html TEXT NOT NULL,
+                author VARCHAR(20),
+                text TEXT,
+                text_html TEXT,
                 parent_id VARCHAR(128),
-                permalink VARCHAR(2083) NOT NULL,
+                permalink VARCHAR(2083),
                 post_id VARCHAR(128) NOT NULL,
                 score INT,
 
-                FOREIGN KEY (author_id) REFERENCES " . $this->UsersName . " (id),
+                FOREIGN KEY (author) REFERENCES " . $this->UsersName . " (user_name),
                 FOREIGN KEY (parent_id) REFERENCES " . $this->CommentsName . " (id),
                 FOREIGN KEY (post_id) REFERENCES " . $this->PostsName . " (id)
             )";

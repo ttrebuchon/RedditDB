@@ -53,7 +53,7 @@ class Post
         $this->score = $json["score"];
         $this->link = $json["url"];
         $this->subreddit = $json["subreddit"];
-        $this->subreddit_id = $json["subreddit_id"];
+        $this->subreddit_id = substr($json["subreddit_id"], 3);
         $this->utc_timestamp = $json["created_utc"];
     }
 
@@ -104,8 +104,8 @@ class Comment
     public $replies;
     public $id;
     public $score;
-    public $body;
-    public $body_html;
+    public $text;
+    public $text_html;
     public $author;
     public $parent_id;
     public $edited;
@@ -139,8 +139,8 @@ class Comment
         }
         $this->id = $json["id"];
         $this->score = $json["score"];
-        $this->body = $json["body"];
-        $this->body_html = $json["body_html"];
+        $this->text = $json["body"];
+        $this->text_html = $json["body_html"];
         $this->author = $json["author"];
         if ("t3_" != substr($json["parent_id"], 0, 3)) {
             $this->parent_id = substr($json["parent_id"], 3);
@@ -192,6 +192,33 @@ class CommentListing
 
         return $listing;
     }
+
+    public function getAuthors()
+    {
+        $authors = [];
+
+        foreach ($this->comments as $comment)
+        {
+            array_push($authors, $comment->author);
+            if ($comment->replies !== null)
+            {
+                $authors = array_merge($authors, $comment->replies->getAuthors());
+            }
+        }
+
+
+        return $authors;
+    }
+}
+
+class User
+{
+    public $name;
+    public $id;
+    public $utc_timestamp;
+    public $link_score;
+    public $comment_score;
+    public $suspended;
 }
 
 
@@ -320,6 +347,18 @@ class Reddit
             }
         }
 
+        if (array_key_exists('is_suspended', $json))
+        {
+            if ($json['is_suspended'] === true)
+            {
+                $id = null;
+                $utc_timestamp = null;
+                $link_score = null;
+                $comment_score = null;
+                return;
+            }
+        }
+
         if (!array_key_exists("data", $json))
         {
             WriteDump("Weird JSON: ", $json);
@@ -327,6 +366,18 @@ class Reddit
         }
 
         $json = $json["data"];
+
+        if (array_key_exists('is_suspended', $json))
+        {
+            if ($json['is_suspended'] === true)
+            {
+                $id = null;
+                $utc_timestamp = null;
+                $link_score = null;
+                $comment_score = null;
+                return;
+            }
+        }
 
         if (!array_key_exists("id", $json))
         {
@@ -340,6 +391,80 @@ class Reddit
         $comment_score = $json["comment_karma"];
 
         //TODO
+    }
+
+    function GetUser($name)
+    {
+        if ($name === "[deleted]")
+        {
+            return null;
+        }
+        $json = $this->GetUserInfoJSON($name);
+
+        if (array_key_exists("message", $json)) {
+            if (array_key_exists("error", $json)) {
+                if ($json["error"] == 404) {
+                    throw new RedditAPIException("user", 404, "user '" . $name . "' does not exist");
+                } else {
+                    throw new RedditAPIException("user", $json["error"], $json["message"]);
+                }
+            }
+        }
+
+        if (array_key_exists('is_suspended', $json))
+        {
+            if ($json['is_suspended'] === true)
+            {
+                $usr = new User();
+                $usr->name = $name;
+                $usr->suspended = true;
+                return $usr;
+            }
+            else
+            {
+                WriteDump("Has key but not true: ", $json);
+                throw new Exception();
+            }
+        }
+        
+
+        if (!array_key_exists("data", $json))
+        {
+            WriteDump("Weird JSON: ", $json);
+            WriteDump("Has the key? ", array_key_exists('is_suspended', $json));
+            throw new Exception("Weird JSON!");
+        }
+
+        $json = $json["data"];
+
+        if (array_key_exists('is_suspended', $json))
+        {
+            if ($json['is_suspended'] === true)
+            {
+                $usr = new User();
+                $usr->name = $name;
+                $usr->suspended = true;
+                return $usr;
+            }
+        }
+
+        if (!array_key_exists("id", $json))
+        {
+            WriteDump("Weird JSON: ", $json);
+            throw new Exception("Weird JSON!");
+        }
+
+        $usr = new User();
+
+        $usr->name = $json['name'];
+        $usr->id = $json["id"];
+        $usr->utc_timestamp = $json["created_utc"];
+        $usr->link_score = $json["link_karma"];
+        $usr->comment_score = $json["comment_karma"];
+
+        //TODO
+
+        return $usr;
     }
 
     function GetUserPostsJSON($name, $sorting = "new", $count = 10)
@@ -393,5 +518,17 @@ class Reddit
         $json = $json["data"]["children"][0];
 
         return Comment::FromJson($json);
+    }
+
+    function GetPost($id)
+    {
+        if ($id === null)
+        {
+            return null;
+        }
+        $json = $this->GetJSON('/' . $id, 'limit=1');
+
+        $json = $json[0]['data'];
+        return Post::FromJson($json);
     }
 }

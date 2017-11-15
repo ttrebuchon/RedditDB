@@ -16,8 +16,6 @@ function outputJS($code)
     return "<script type=\"text/javascript\">" . $code . "</script>";
 }
 
-    $testJS = "console.log('Hello, world!');";
-
 function WriteLine($line = "")
 {
     echo '<pre>' . $line . '</pre>';
@@ -50,12 +48,6 @@ function echoAndWriteLine($filepath, $data)
     testWrite($filepath, $data);
     WriteLine($data);
 }
-
-    
-
-    echoAndWrite("Hello.txt", outputJS($testJS) . "\n");
-
-    echoAndWriteLine("Hello.txt", "Hello, world!");
 
 
 class Foo
@@ -183,9 +175,9 @@ foreach ($gaming as $post) {
     
     if (!$client->UserStored_ByName($post->author))
     {
-        $reddit->GetUserInfo($post->author, $id, $utc_created, $link_score, $comment_score);
-        WriteLine($id);
-        $client->AddUser($id, $post->author, $utc_created, $link_score, $comment_score);
+        $usr = $reddit->getUser($post->author);
+        WriteLine($usr->id);
+        $client->addUser($usr);
     }
 
     if (!$client->PostStoredByID($post->id))
@@ -291,7 +283,7 @@ $all_subs = array_unique($all_subs);
 
 $authors = array();
 
-
+$suspendedUser = $reddit->GetUser('freddingo');
 
 foreach ($all_subs as $sub)
 {
@@ -308,7 +300,7 @@ foreach ($all_subs as $sub)
         $client->AddPost($reddit, $post);
         array_push($authors, $post->author);
         $post->getComments();
-        $client->AddCommentsListing($post->comments);
+        $client->AddCommentsListing($reddit, $post->comments);
         if (count($post->comments->comments) > 0)
         {
             $someComment = $client->GetCommentByID($post->comments->comments[0]->id);
@@ -335,4 +327,43 @@ foreach ($authors as $author)
 }
 
 
+$postIDs = [];
+foreach ($userSample as $user)
+{
+    try
+    {
+        $comments = $reddit->GetUserComments($user->name, 10);
+        foreach ($comments->comments as $comment)
+        {
+            if ($comment !== null)
+            {
+                array_push($postIDs, $comment->post_id);
+            }
+        }
+    }
+    catch (RedditAPIException $ex)
+    {
+        if ($ex->msg === 'user does not exist')
+        {
+
+        }
+        else
+        {
+            throw $ex;
+        }
+    }
+    
+}
+
+$postIDs = array_unique($postIDs);
+
+$postIDs = array_diff($postIDs, $client->PostsStored_ByID($postIDs));
+
+WriteDump("More Post IDs: ", $postIDs);
+
+foreach ($postIDs as $id)
+{
+    $post = $reddit->GetPost($id);
+    $client->AddPost($reddit, $post);
+}
 
