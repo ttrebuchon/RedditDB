@@ -276,24 +276,25 @@ class RedditSQLClient
 
         if ($usr === null || gettype($usr) !== 'object')
         {
-            throw new Exception("Tried to add null user");
+            throw new Exception("Tried to add null user: '" . var_export($usr, true) . "'");
         }
 
-        $query =
-            "INSERT INTO " . $this->schema->UsersTable()
-            . " (
-                id,
-                user_name,
-                utc_created,
-                link_score,
-                comment_score
-            ) VALUES (
-                ?,
-                ?,
-                FROM_UNIXTIME(?),
-                ?,
-                ?
-            )";
+        // $query =
+        //     "INSERT INTO " . $this->schema->UsersTable()
+        //     . " (
+        //         id,
+        //         user_name,
+        //         utc_created,
+        //         link_score,
+        //         comment_score
+        //     ) VALUES (
+        //         ?,
+        //         ?,
+        //         FROM_UNIXTIME(?),
+        //         ?,
+        //         ?
+        //     )";
+        $query = 'CALL ' . $this->schema->Database('AddUser') . '(?, ?, ?, ?, ?)';
         
         $stmt = $this->connection->prepare($query);
 
@@ -302,8 +303,8 @@ class RedditSQLClient
         }
 
         if (false === $stmt->bind_param("ssiii",
-            $usr->id,
             $usr->name,
+            $usr->id,
             $usr->utc_created,
             $usr->link_score,
             $usr->comment_score)
@@ -452,16 +453,26 @@ class RedditSQLClient
         {
 
         }
+        else if ($post->author === '[deleted]')
+        {
+            $post->author = null;
+        }
         else if (!$this->UserStored_ByName($post->author))
         {
-            $author = $Reddit->GetUser($post->author);
-            $this->AddUser($author);
+            try
+            {
+                $author = $Reddit->GetUser($post->author);
+                $this->AddUser($author);
+            }
+            catch (RedditAPIException $ex)
+            {
+                if (strpos($ex->msg, 'does not exist') !== false)
+                {
+                    $post->author = null;
+                }
+            }
+            
         }
-
-        // if ($post->subreddit_id === null || $post->subreddit === null)
-        // {
-        //     WriteDump("Post with null subreddit: ", $post);
-        // }
 
         if (!$this->subredditStored_ByName($post->subreddit))
         {
@@ -1104,6 +1115,11 @@ class DBSchema
         //         FOREIGN KEY (comment_id) REFERENCES " . $this->CommentsName . "(id)
         //     )";
         // $client->query($posts_comments_create_query) or Exc($client->error_get_last);
+
+
+        $addUserProc = $this->createProc_AddUser($client);
+        assert($addUserproc);
+        
     }
 
     public function CommentsTable($column = null)
@@ -1145,6 +1161,47 @@ class DBSchema
         }
         return $str;
     }
+
+    public function Database($table = null)
+    {
+        $str = $this->DatabaseName;
+        if ($table !== null)
+        {
+            $str = $str . "." . $table;
+        }
+        return $str;
+    }
+
+    public function createProc_AddUser($client)
+    {
+        $query_drop = 'DROP PROCEDURE IF EXISTS '
+            . $this->Database('AddUser');
+        $client->query($query_drop);
+
+        $query = 'CREATE PROCEDURE  
+            ' . $this->Database('AddUser') . ' (
+                    name TEXT,
+                    uid TEXT,
+                    created INT,
+                    lnk_scr INT,
+                    comment_scr INT
+                )
+            BEGIN
+                INSERT INTO ' . $this->UsersTable() . '
+                (id, user_name, utc_created, link_score, comment_score)
+                VALUES
+                (uid, name, FROM_UNIXTIME(created), lnk_scr, comment_scr)
+                ON DUPLICATE KEY UPDATE
+                    id = IF(uid <> NULL, uid, id),
+                    utc_created = IF(created <> NULL, FROM_UNIXTIME(created), utc_created),
+                    link_score = IF(lnk_scr <> NULL, lnk_scr, link_score),
+                    comment_score = IF(comment_scr <> NULL, comment_scr, comment_score)
+                ;
+            END';
+        $res = $client->query($query);
+        return $res === true;
+    }
+
 
     public function drop($client)
     {

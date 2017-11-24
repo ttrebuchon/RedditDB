@@ -247,6 +247,7 @@ class Reddit
         }
         curl_setopt($this->curl, CURLOPT_URL, $URL);
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true);
         $result = curl_exec($this->curl);
         return json_decode($result, true);
     }
@@ -526,9 +527,9 @@ class Reddit
         {
             return null;
         }
-        $json = $this->GetJSON('/' . $id, 'limit=1');
-
-        $json = $json[0]['data'];
+        $json = $this->GetJSON('/' . $id . '/', 'limit=1');
+        $json = $json[0]['data']['children'][0]['data'];
+        
         return Post::FromJson($json);
     }
 }

@@ -222,7 +222,7 @@ try {
 
 //WriteDump($reddit->GetComments("770smp"));
 
-
+/*
 $base_post = $gaming[0];
 
 $comments_q = $base_post->GetComments();
@@ -307,10 +307,10 @@ foreach ($all_subs as $sub)
         }
     }
 }
-
+*/
 $userSample = $client->GetUsers(100);
 WriteDump("Users list: ", $userSample);
-
+/*
 
 
 $authors = array_unique($authors);
@@ -324,7 +324,7 @@ foreach ($authors as $author)
 {
     $reddit->GetUserInfo($author, $author_id, $utc_timestamp, $link_score, $comment_score);
     $client->AddUser($author_id, $author, $utc_timestamp, $link_score, $comment_score);
-}
+}*/
 
 
 $postIDs = [];
@@ -355,15 +355,21 @@ foreach ($userSample as $user)
     
 }
 
-$postIDs = array_unique($postIDs);
+$upostIDs = array_unique($postIDs);
 
-$postIDs = array_diff($postIDs, $client->PostsStored_ByID($postIDs));
+$upostIDs = array_diff($upostIDs, $client->PostsStored_ByID($upostIDs));
 
-WriteDump("More Post IDs: ", $postIDs);
+WriteDump("More Post IDs: ", $upostIDs);
 
-foreach ($postIDs as $id)
+foreach ($upostIDs as $id)
 {
     $post = $reddit->GetPost($id);
     $client->AddPost($reddit, $post);
+}
+
+foreach ($postIDs as $id)
+{
+    $comments = $reddit->GetComments($id);
+    $client->AddCommentsListing($reddit, $comments);
 }
 
