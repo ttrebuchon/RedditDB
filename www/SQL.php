@@ -1039,6 +1039,11 @@ class DBSchema
     public $UsersName = "Users";
     public $SubredditsName = "Subreddits";
     // public $PostsCommentsName = "PostsComments";
+    public $SiteUsersName = "SiteUsers";
+    public $WatchedPostsName = "WatchedPosts";
+    public $WatchedCommentsName = "WatchedComments";
+    public $WatchedSubredditsName = "WatchedSubreddits";
+    public $WatchedUsersName = "WatchedUsers";
         
     public function Initialize($client)
     {
@@ -1115,7 +1120,53 @@ class DBSchema
         //         FOREIGN KEY (comment_id) REFERENCES " . $this->CommentsName . "(id)
         //     )";
         // $client->query($posts_comments_create_query) or Exc($client->error_get_last);
-
+        
+        $site_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->SiteUsersTable() .
+        " (
+        		username TEXT PRIMARY KEY,
+        		auth_key TEXT NOT NULL
+        )";
+        $client->query($site_users_create_query) or Exc($client->error_get_last);
+        
+        $watched_posts_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedPostsTable() .
+        " (
+        		username TEXT PRIMARY KEY,
+        		post_id VARCHAR(128) PRIMARY KEY,
+        		
+        		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
+        		FOREIGN KEY (post_id) REFERENCES " . $this->PostsTable() . " (id)
+         )";
+         $client->query($watched_posts_create_query) or Exc($client->error_get_last);
+         
+         $watched_comments_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedCommentsTable() .
+         " (
+        		username TEXT PRIMARY KEY,
+        		comment_id VARCHAR(128) PRIMARY KEY,
+        		
+        		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
+        		FOREIGN KEY (comment_id) REFERENCES " . $this->CommentsTable() . " (id)
+         )";
+         $client->query($watched_comments_create_query) or Exc($client->error_get_last);
+         
+         $watched_subreddits_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedSubredditsTable() .
+         " (
+        		username TEXT PRIMARY KEY,
+        		subreddit_id VARCHAR(128) PRIMARY KEY,
+        		
+        		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
+        		FOREIGN KEY (subreddit_id) REFERENCES " . $this->SubredditsTable() . " (subreddit_id)
+         )";
+         $client->query($watched_subreddits_create_query) or Exc($client->error_get_last);
+         
+         $watched_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedPostsTable() .
+         " (
+        		username TEXT PRIMARY KEY,
+        		reddit_user VARCHAR(20) PRIMARY KEY,
+        		
+        		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
+        		FOREIGN KEY (reddit_user) REFERENCES " . $this->UsersTable() . " (user_name)
+         )";
+         $client->query($watched_users_create_query) or Exc($client->error_get_last);
 
         $addUserProc = $this->createProc_AddUser($client);
         assert($addUserproc);
@@ -1155,6 +1206,16 @@ class DBSchema
     public function SubredditsTable($column = null)
     {
         $str = $this->DatabaseName . "." . $this->SubredditsName;
+        if ($column != null)
+        {
+            $str = $str . "." . $column;
+        }
+        return $str;
+    }
+    
+    public function SiteUsersTable($column = null)
+    {
+        $str = $this->DatabaseName . "." . $this->SiteUsersName;
         if ($column != null)
         {
             $str = $str . "." . $column;
