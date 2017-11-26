@@ -1167,7 +1167,14 @@ class DBSchema
         		FOREIGN KEY (reddit_user) REFERENCES " . $this->UsersTable() . " (user_name)
          )";
          $client->query($watched_users_create_query) or Exc($client->error_get_last);
-
+         
+         $queue_create_query = "CREATE TABLE IF NOT EXISTS " . $this->QueueTable() . " (
+         	timestamp TIMESTAMP,
+         	type INT,
+         	request TEXT
+         )";
+         $client->query($queue_create_query) or Exc($client->error_get_last);
+        
         $addUserProc = $this->createProc_AddUser($client);
         assert($addUserproc);
         
@@ -1222,6 +1229,16 @@ class DBSchema
         }
         return $str;
     }
+    
+    public function QueueTable($col = null)
+    {
+    	$str = $this->Database("Queue");
+    	if ($col != null)
+    	{
+    		$str = $str . "." . $col;
+    	}
+    	return $str;
+    }
 
     public function Database($table = null)
     {
@@ -1270,3 +1287,4 @@ class DBSchema
         $client->query($drop_query) or Exc($client->error_get_last);
     }
 }
+    
