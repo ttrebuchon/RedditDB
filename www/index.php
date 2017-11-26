@@ -1,15 +1,23 @@
-<!DOCTYPE html>
-<html>
-<body>
 
 <?php
+require_once('includes/config.php');
+
+if ($session->isAuthenticated())
+{
+    header('Location: home.php');
+    exit();
+}
+
+$title = "Index";
+
+require('layout/header.php');
+
+ini_set("display_errors", "stdout");
+//ini_set("max_execution_time", "30");
+set_time_limit(30);
 try
 {
-    ini_set("display_errors", "stdout");
-    //ini_set("max_execution_time", "30");
-    set_time_limit(30);
-    include "SQL.php";
-    include "Test.php";
+    
 }
 catch (Exception $ex)
 {
@@ -22,7 +30,9 @@ catch (Exception $ex)
     Testing!
 </span>
 
+<?php
 
+require('layout/footer.php');
 
-</body>
-</html>
+?>
+

@@ -1,7 +1,5 @@
 <?php
 
-require_once('config.php');
-
 function Exc($msg)
 {
     throw new Exception($msg);

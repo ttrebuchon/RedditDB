@@ -1,6 +1,12 @@
 <?php
+try
+{
+    ini_set("display_errors", "stdout");
+    //ini_set("max_execution_time", "30");
+    set_time_limit(30);
+    require('includes/config.php');
 
-    include("Reddit.php");
+    include("classes/Reddit.php");
 
 function testWrite($filepath, $data)
 {
@@ -140,7 +146,9 @@ for ($i = 0; $i < count($posts); $i = $i + 1) {
     //echo gettype($comments);
     WriteLine(var_dump($comments));
 
-    $client = new RedditSQLClient(DBHOST);
+    //$client = new RedditSQLClient(DBHOST);
+    $client = $sql;
+    assert($client != null);
 
 try {
     // $schema = new DBSchema();
@@ -371,5 +379,11 @@ foreach ($postIDs as $id)
 {
     $comments = $reddit->GetComments($id);
     $client->AddCommentsListing($reddit, $comments);
+}
+
+}
+catch (Exception $ex)
+{
+    echo '<pre>' . var_export($ex, true)."\n" . '</pre>';
 }
 
