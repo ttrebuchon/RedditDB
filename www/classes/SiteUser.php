@@ -34,6 +34,10 @@ class SiteUser
         foreach (SiteUser::PermissionNames as $name)
         {
             $this->permissions[$name] = null;
+            if (array_key_exists($name, $_SESSION))
+            {
+                $this->permissions[$name] = $_SESSION[$name];
+            }
         }
     }
 

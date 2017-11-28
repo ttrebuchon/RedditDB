@@ -66,10 +66,10 @@ class Session
     {
         $_SESSION['username'] = null;
         $_SESSION['loggedin'] = false;
-        $_SESSION['canBackup'] = null;
-        $_SESSION['canRestore'] = null;
-        $_SESSION['canEdit'] = null;
-        $_SESSION['canManageUsers'] = null;
+        foreach (array_keys($this->user->permissions) as $key)
+        {
+            $_SESSION[$key] = null;
+        }
         $this->user = new SiteUser();
     }
 
@@ -94,6 +94,10 @@ class Session
     private function RefreshData()
     {
         $this->sql->getSiteUserData($this->user->name, $this->user);
+        foreach (array_keys($this->user->permissions) as $key)
+        {
+            $_SESSION[$key] = $this->user->permissions[$key];
+        }
     }
 }
 
