@@ -1,6 +1,6 @@
 <?php
 
-require_once('classes/Schema.php');
+require_once(__DIR__ . '/../' . 'classes/Schema.php');
 
 function Exc($msg)
 {

@@ -1,7 +1,7 @@
 <?php
 
-require_once('classes/SiteUser.php');
-require_once('classes/SQL.php');
+require_once(__DIR__ . '/../' . 'classes/SiteUser.php');
+require_once(__DIR__ . '/../' . 'classes/SQL.php');
 
 class LoginException extends Exception
 {

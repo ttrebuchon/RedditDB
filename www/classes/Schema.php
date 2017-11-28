@@ -1,6 +1,6 @@
 <?php
 
-require_once('classes/SiteUser.php');
+require_once(__DIR__ . '/../' . 'classes/SiteUser.php');
 
 class DBSchema
 {

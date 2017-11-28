@@ -1,11 +1,11 @@
 
 <?php
-require_once('includes/config.php');
+require_once(__DIR__ . '/' . 'includes/config.php');
 
 //User is already logged in, redirect to Home
 if ($session->isAuthenticated())
 {
-    header('Location: home.php');
+    header('Location: Portal/home.php');
     exit();
 }
 
@@ -65,6 +65,10 @@ if (isset($_POST['submit']))
             $pass = SiteUser::HashPassword($_POST['password']);
 
             $sql->CreateSiteUser($username, $pass);
+
+            $session->Login($username, $_POST['password']);
+
+            header('Location: Portal/home.php');
         }
     }
 

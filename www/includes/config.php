@@ -1,8 +1,7 @@
 <?php
 session_start();
 
-
-require_once('includes/Environment.php');
+require_once(__DIR__ . '/../' . 'includes/Environment.php');
 
 if (isset($DEBUG) && $DEBUG === true)
 {
@@ -16,13 +15,13 @@ else
 }
 
 
-require_once('classes/SQL.php');
+require_once(__DIR__ . '/../' . 'classes/SQL.php');
 
 $sql = new RedditSQLClient(DBHOST);
 $sql->initializeSchema();
 
 
-require_once('classes/Session.php');
+require_once(__DIR__ . '/../' . 'classes/Session.php');
 $session = new Session($sql);
 
 
