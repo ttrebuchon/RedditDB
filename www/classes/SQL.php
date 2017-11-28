@@ -1094,6 +1094,14 @@ class RedditSQLClient
         $perms['Restore'] = ($res['perm_' . 'restore'] == true);
         $perms['Edit'] = ($res['perm_' . 'edit'] == true);
         $perms['ManageUsers'] = ($res['perm_' . 'manage_users'] == true);
+
+
+        $user->fname = $res['fname'];
+        $user->lname = $res['lname'];
+        $user->age = (int)$res['age'];
+        $user->telephone = $res['telephone'];
+        $user->email = $res['email'];
+        $user->address = $res['address'];
     }
 
 

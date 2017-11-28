@@ -10,6 +10,13 @@ class SiteUser
 
     const PermissionNames = ['ManageUsers', 'Backup', 'Restore', 'Edit'];
 
+    public $fname;
+    public $lname;
+    public $age;
+    public $telephone;
+    public $email;
+    public $address;
+
     function __get($name)
     {
         if (substr($name, 0, 3) === 'can')
