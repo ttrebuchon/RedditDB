@@ -1047,6 +1047,26 @@ class RedditSQLClient
         return (int)$res[0];
     }
 
+    public function getPasswordHash_ByName($username)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT auth_key FROM ' . $this->schema->SiteUsersTable() . ' WHERE username=?'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $username);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_array();
+        return $res[0];
+    }
+
 
 
     public function startTransaction()
