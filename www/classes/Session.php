@@ -61,6 +61,12 @@ class Session
             throw new LoginException($ex);
         }
     }
+
+    public function Logout()
+    {
+        $_SESSION['username'] = null;
+        $_SESSION['loggedin'] = false;
+    }
 }
 
 ?>

@@ -13,7 +13,7 @@ require('layout/header.php');
 
 ?>
 
-Hello?
+<a href="Logout.php">Logout</a>
 
 <?php
 require('layout/footer.php');
