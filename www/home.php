@@ -3,7 +3,7 @@ require_once('includes/config.php');
 
 if (!$session->isAuthenticated())
 {
-    header('Location: Register.php');
+    header('Location: Login.php');
     exit();
 }
 
