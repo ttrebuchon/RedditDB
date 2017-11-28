@@ -2,10 +2,46 @@
 <?php
 require_once('includes/config.php');
 
+//User is already logged in, redirect to Home
 if ($session->isAuthenticated())
 {
     header('Location: home.php');
     exit();
+}
+
+//This is a response request, try to authenticate user
+if (isset($_POST['submit']))
+{
+    if (!isset($_POST['username']) || $_POST['username'] === '' || $_POST['username'] == null)
+    {
+        $err[] = "Please supply a username";
+    }
+    else if (!isset($_POST['password']) || $_POST['password'] === '' || $_POST['password'] == null)
+    {
+        $err[] = "Please supply a password";
+    }
+
+    if (!isset($err))
+    {
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        try
+        {
+            $session->Login($username, $password);
+
+            //Validation is good, continue
+            header('Location: home.php');
+            exit();
+        }
+        catch (LoginException $ex)
+        {
+            $err[] = "Wrong username or password!";
+        }
+
+
+        
+    }
 }
 
 
