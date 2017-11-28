@@ -1025,19 +1025,6 @@ class RedditSQLClient
 
         $query->bind_param("ss", $username, $hash);
         $query->execute() or SQL_Exc($this->connection);
-
-        $id = $this->getSiteUserID($username);
-
-        static $permQuery = null;
-        if ($permQuery == null)
-        {
-            $permQuery = $this->connection->prepare(
-                "INSERT INTO " . $this->schema->PermissionsTable() . " (user_id) VALUES (?);"
-            ) or SQL_Exc($this->connection);
-        }
-
-        $permQuery->bind_param("i", $id);
-        $permQuery->execute() or SQL_Exc($this->connection);
     }
 
     public function getSiteUserID($username)
