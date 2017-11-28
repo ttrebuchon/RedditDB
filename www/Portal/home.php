@@ -14,6 +14,11 @@ require(__DIR__ . '/../' . 'layout/header.php');
 
 ?>
 
+<p>
+    <b>
+        <?php echo 'Welcome, ' . $session->username . '!'; ?>
+    </b>
+</p>
 <ul list-style-type="square">
 <li><a href="Profile.php">Profile</a></li>
 <li><a href="../Logout.php">Logout</a></li>
