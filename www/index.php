@@ -7,6 +7,11 @@ if ($session->isAuthenticated())
     header('Location: home.php');
     exit();
 }
+else
+{
+    header('Location: Login.php');
+    exit();
+}
 
 $title = "Index";
 

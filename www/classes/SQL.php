@@ -984,6 +984,47 @@ class RedditSQLClient
         return $comment;
     }
 
+    public function siteUserExists($name)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query === null)
+        {
+            $query = $this->connection->prepare(
+                "SELECT COUNT(username) FROM " . $this->schema->SiteUsersTable() . " WHERE username = ?"
+            )  or SQL_Exc($this->connection);
+        }
+
+
+        $query->bind_param("s", $name);
+        $query->execute() or SQL_Exc($this->connection);
+        $result = $query->get_result()->fetch_array();
+
+        return ($result[0] > 0);
+    }
+
+    public function createSiteUser($username, $hash)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query === null)
+        {
+            $query = $this->connection->prepare(
+                "INSERT INTO " . $this->schema->SiteUsersTable() . " VALUES (?, ?);"
+            )  or SQL_Exc($this->connection);
+        }
+
+
+        $query->bind_param("ss", $username, $hash);
+        $query->execute() or SQL_Exc($this->connection);
+    }
+
 
 
     public function startTransaction()
@@ -1121,16 +1162,17 @@ class DBSchema
         
         $site_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->SiteUsersTable() .
         " (
-        		username TEXT PRIMARY KEY,
+        		username varchar(100) PRIMARY KEY,
         		auth_key TEXT NOT NULL
         )";
         $client->query($site_users_create_query) or Exc($client->error_get_last);
         
         $watched_posts_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedPostsTable() .
         " (
-        		username TEXT PRIMARY KEY,
-        		post_id VARCHAR(128) PRIMARY KEY,
-        		
+        		username varchar(100) NOT NULL,
+        		post_id VARCHAR(128) NOT NULL,
+                
+                PRIMARY KEY(username, post_id),
         		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
         		FOREIGN KEY (post_id) REFERENCES " . $this->PostsTable() . " (id)
          )";
@@ -1138,9 +1180,10 @@ class DBSchema
          
          $watched_comments_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedCommentsTable() .
          " (
-        		username TEXT PRIMARY KEY,
-        		comment_id VARCHAR(128) PRIMARY KEY,
-        		
+        		username varchar(100) NOT NULL,
+        		comment_id VARCHAR(128) NOT NULL,
+                
+                PRIMARY KEY(username, comment_id),
         		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
         		FOREIGN KEY (comment_id) REFERENCES " . $this->CommentsTable() . " (id)
          )";
@@ -1148,9 +1191,10 @@ class DBSchema
          
          $watched_subreddits_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedSubredditsTable() .
          " (
-        		username TEXT PRIMARY KEY,
-        		subreddit_id VARCHAR(128) PRIMARY KEY,
-        		
+        		username varchar(100) NOT NULL,
+        		subreddit_id VARCHAR(128) NOT NULL,
+                
+                PRIMARY KEY(username, subreddit_id),
         		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
         		FOREIGN KEY (subreddit_id) REFERENCES " . $this->SubredditsTable() . " (subreddit_id)
          )";
@@ -1158,9 +1202,10 @@ class DBSchema
          
          $watched_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedPostsTable() .
          " (
-        		username TEXT PRIMARY KEY,
-        		reddit_user VARCHAR(20) PRIMARY KEY,
-        		
+        		username varchar(100) NOT NULL,
+        		reddit_user VARCHAR(20) NOT NULL,
+                
+                PRIMARY KEY(username, reddit_user),
         		FOREIGN KEY (username) REFERENCES " . $this->SiteUsersTable() . " (username),
         		FOREIGN KEY (reddit_user) REFERENCES " . $this->UsersTable() . " (user_name)
          )";
@@ -1224,6 +1269,46 @@ class DBSchema
         if ($column != null)
         {
             $str = $str . "." . $column;
+        }
+        return $str;
+    }
+
+    public function WatchedPostsTable($col = null)
+    {
+        $str = $this->Database($this->WatchedPostsName);
+        if ($col != null)
+        {
+            return $str . "." . $col;
+        }
+        return $str;
+    }
+
+    public function WatchedCommentsTable($col = null)
+    {
+        $str = $this->Database($this->WatchedCommentsName);
+        if ($col != null)
+        {
+            return $str . "." . $col;
+        }
+        return $str;
+    }
+
+    public function WatchedSubredditsTable($col = null)
+    {
+        $str = $this->Database($this->WatchedSubredditsName);
+        if ($col != null)
+        {
+            return $str . "." . $col;
+        }
+        return $str;
+    }
+
+    public function WatchedUsersTable($col = null)
+    {
+        $str = $this->Database($this->WatchedUsersName);
+        if ($col != null)
+        {
+            return $str . "." . $col;
         }
         return $str;
     }

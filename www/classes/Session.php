@@ -4,7 +4,7 @@ require_once('classes/SiteUser.php');
 
 class Session
 {
-    public $siteUser;
+    public $username;
 
 
     public function __construct()
@@ -12,8 +12,7 @@ class Session
         $this->siteUser = null;
         if ($this->isAuthenticated())
         {
-            $this->siteUser = new SiteUser();
-            $this->siteUser->usr = $_SESSION['username'];
+            $this->username = $_SESSION['username'];
         }
     }
 
