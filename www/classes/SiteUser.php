@@ -20,7 +20,7 @@ class SiteUser
         return password_hash($password, PASSWORD_DEFAULT);
     }
 
-    private static function verifyPassword($hash, $password)
+    public static function verifyPassword($hash, $password)
     {
         return password_verify($password, $hash);
     }
