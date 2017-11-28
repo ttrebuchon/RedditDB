@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 
 
 require_once('includes/Environment.php');
@@ -17,10 +17,13 @@ else
 
 
 require_once('classes/SQL.php');
-include('classes/Session.php');
 
 $sql = new RedditSQLClient(DBHOST);
-$session = new Session();
+$sql->initializeSchema();
+
+
+require_once('classes/Session.php');
+$session = new Session($sql);
 
 
 ?>
