@@ -91,7 +91,7 @@ class Session
         return false;
     }
 
-    private function RefreshData()
+    public function RefreshData()
     {
         $this->sql->getSiteUserData($this->user->name, $this->user);
         foreach (array_keys($this->user->permissions) as $key)
