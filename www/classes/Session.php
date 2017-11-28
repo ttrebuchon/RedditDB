@@ -16,16 +16,28 @@ class LoginException extends Exception
 
 class Session
 {
-    public $username;
+    public $user;
     public $sql;
+
+    function __get($name)
+    {
+        if (substr($name, 0, 3) === 'can')
+        {
+            if (in_array(substr($name, 3), $this->permissions))
+            {
+                return $this->permissions[$name];
+            }
+        }
+        
+    }
 
     public function __construct($sql)
     {
         $this->sql = $sql;
-        $this->siteUser = null;
+        $this->user = new SiteUser();
         if ($this->isAuthenticated())
         {
-            $this->username = $_SESSION['username'];
+            $this->user->name = $_SESSION['username'];
         }
     }
 
@@ -47,8 +59,8 @@ class Session
             
             if (SiteUser::verifyPassword($hash, $password))
             {
-                $this->username = $username;
-                $_SESSION['username'] = $this->username;
+                $this->user->name = $username;
+                $_SESSION['username'] = $this->user->name;
                 $_SESSION['loggedin'] = true;
             }
             else
@@ -66,6 +78,34 @@ class Session
     {
         $_SESSION['username'] = null;
         $_SESSION['loggedin'] = false;
+        $_SESSION['canBackup'] = null;
+        $_SESSION['canRestore'] = null;
+        $_SESSION['canEdit'] = null;
+        $_SESSION['canManageUsers'] = null;
+        $this->user = new SiteUser();
+    }
+
+    public function HasAdminPrivs()
+    {
+        foreach ($this->user->permissions as $perm)
+        {
+            
+            if ($perm === true)
+            {
+                return true;
+            }
+            else if ($perm === null)
+            {
+                $this->RefreshData();
+                return $this->HasAdminPrivs();
+            }
+        }
+        return false;
+    }
+
+    private function RefreshData()
+    {
+        $this->sql->getSiteUserData($this->user->name, $this->user);
     }
 }
 

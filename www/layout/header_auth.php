@@ -1,4 +1,11 @@
+<?php
+if (!$session->isAuthenticated())
+{
+    header('Location: /Login.php');
+    exit();
+}
 
+?>
 
 <html>
 
@@ -11,11 +18,17 @@
 <body>
 <p>
     <b>
-        <?php echo 'Welcome, ' . $session->username . '!'; ?>
+        <?php echo 'Welcome, ' . $session->user->name . '!'; ?>
     </b>
 </p>
 <ul list-style-type="square">
     <li><a href="/Portal/Home.php">Home</a></li>
     <li><a href="/Portal/Profile.php">Profile</a></li>
+    <?php
+         if ($session->hasAdminPrivs())
+         {
+             echo '<li><a href="/Portal/Admin.php">Administrator</a></li>';
+         }
+    ?>
     <li><a href="/Logout.php">Logout</a></li>
 </ul>

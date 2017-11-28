@@ -3,6 +3,27 @@
 
 class SiteUser
 {
+
+    public $name;
+
+    public $permissions = [];
+
+    const PermissionNames = ['ManageUsers', 'Backup', 'Restore', 'Edit'];
+
+
+
+
+    public function __construct()
+    {
+        $this->name = null;
+        foreach (SiteUser::PermissionNames as $name)
+        {
+            $this->permissions[$name] = null;
+        }
+    }
+
+
+
     public static function ValidUsername($name)
     {
         //Check if alphanumeric only

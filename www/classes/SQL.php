@@ -1,6 +1,7 @@
 <?php
 
 require_once(__DIR__ . '/../' . 'classes/Schema.php');
+require_once(__DIR__ . '/../' . 'classes/SiteUser.php');
 
 function Exc($msg)
 {
@@ -1065,6 +1066,34 @@ class RedditSQLClient
         $query->execute() or SQL_Exc($this->connection);
         $res = $query->get_result()->fetch_array();
         return $res[0];
+    }
+
+    public function getSiteUserData($username, &$user)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT * FROM ' . $this->schema->SiteUsersTable() . ' WHERE username=?'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $username);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_assoc();
+
+        $user->name = $username;
+
+        $perms = &$user->permissions;
+
+        $perms['Backup'] = ($res['perm_' . 'backup'] == true);
+        $perms['Restore'] = ($res['perm_' . 'restore'] == true);
+        $perms['Edit'] = ($res['perm_' . 'edit'] == true);
+        $perms['ManageUsers'] = ($res['perm_' . 'manage_users'] == true);
     }
 
 
