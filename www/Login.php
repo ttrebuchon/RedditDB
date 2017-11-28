@@ -5,7 +5,7 @@ require_once(__DIR__ . '/' . 'includes/config.php');
 //User is already logged in, redirect to Home
 if ($session->isAuthenticated())
 {
-    header('Location: Portal/home.php');
+    header('Location: Portal/Home.php');
     exit();
 }
 
