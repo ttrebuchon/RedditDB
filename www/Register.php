@@ -2,8 +2,6 @@
 <?php
 require_once('includes/config.php');
 
-$sql->InitializeSchema();
-
 //User is already logged in, redirect to Home
 if ($session->isAuthenticated())
 {
