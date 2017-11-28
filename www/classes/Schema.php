@@ -85,6 +85,14 @@ class DBSchema
                 id INT PRIMARY KEY AUTO_INCREMENT,
         		username varchar(100) UNIQUE NOT NULL,
                 auth_key TEXT NOT NULL,
+
+                fname TEXT,
+                lname TEXT,
+                age INT,
+                tele VARCHAR(10),
+                email TEXT,
+                address TEXT,
+
                 perm_backup BOOL NOT NULL DEFAULT FALSE,
                 perm_restore BOOL NOT NULL DEFAULT FALSE,
                 perm_edit BOOL NOT NULL DEFAULT FALSE,
