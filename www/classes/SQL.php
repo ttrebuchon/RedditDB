@@ -1018,13 +1018,46 @@ class RedditSQLClient
         if ($query === null)
         {
             $query = $this->connection->prepare(
-                "INSERT INTO " . $this->schema->SiteUsersTable() . " VALUES (?, ?);"
+                "INSERT INTO " . $this->schema->SiteUsersTable() . " (username, auth_key) VALUES (?, ?);"
             )  or SQL_Exc($this->connection);
         }
 
 
         $query->bind_param("ss", $username, $hash);
         $query->execute() or SQL_Exc($this->connection);
+
+        $id = $this->getSiteUserID($username);
+
+        static $permQuery = null;
+        if ($permQuery == null)
+        {
+            $permQuery = $this->connection->prepare(
+                "INSERT INTO " . $this->schema->PermissionsTable() . " (user_id) VALUES (?);"
+            ) or SQL_Exc($this->connection);
+        }
+
+        $permQuery->bind_param("i", $id);
+        $permQuery->execute() or SQL_Exc($this->connection);
+    }
+
+    public function getSiteUserID($username)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT id FROM ' . $this->schema->SiteUsersTable() . ' WHERE username=?'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $username);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_array();
+        return (int)$res[0];
     }
 
 

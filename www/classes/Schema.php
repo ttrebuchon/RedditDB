@@ -1,5 +1,6 @@
 <?php
 
+require_once('classes/SiteUser.php');
 
 class DBSchema
 {
@@ -15,7 +16,6 @@ class DBSchema
     public $WatchedSubredditsName = "WatchedSubreddits";
     public $WatchedUsersName = "WatchedUsers";
     public $QueueName = "Queue";
-    public $PermissionsName = "Permissions";
         
     public function Initialize($client)
     {
@@ -79,25 +79,17 @@ class DBSchema
                 FOREIGN KEY (post_id) REFERENCES " . $this->PostsName . " (id)
             )";
         $client->query($comments_create_query) or Exc($client->error_get_last);
-
-        // $posts_comments_create_query = "CREATE TABLE IF NOT EXISTS " . $this->DatabaseName .
-        // "." . $this->PostsCommentsName .
-        // " (
-        //         post_id VARCHAR(128) NOT NULL,
-        //         comment_id VARCHAR(128) NOT NULL,
-
-        //         PRIMARY KEY (post_id, comment_id),
-
-        //         FOREIGN KEY (post_id) REFERENCES " . $this->PostsName . "(id),
-        //         FOREIGN KEY (comment_id) REFERENCES " . $this->CommentsName . "(id)
-        //     )";
-        // $client->query($posts_comments_create_query) or Exc($client->error_get_last);
         
         $site_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->SiteUsersTable() .
         " (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-        		username varchar(100),
-        		auth_key TEXT NOT NULL
+        		username varchar(100) UNIQUE NOT NULL,
+                auth_key TEXT NOT NULL,
+                perm_backup BOOL NOT NULL DEFAULT FALSE,
+                perm_restore BOOL NOT NULL DEFAULT FALSE,
+                perm_edit BOOL NOT NULL DEFAULT FALSE,
+                perm_manage_users BOOL NOT NULL DEFAULT FALSE
+
         )";
         $client->query($site_users_create_query) or Exc($client->error_get_last);
         
@@ -151,20 +143,20 @@ class DBSchema
          	request TEXT
          )";
          $client->query($queue_create_query) or Exc($client->error_get_last);
-
-         $permissions_create_query = "CREATE TABLE IF NOT EXISTS " . $this->PermissionsTable() . " (
-             user_id INT PRIMARY KEY,
-             backup BOOL NOT NULL DEFAULT FALSE,
-             restore BOOL NOT NULL DEFAULT FALSE,
-             edit BOOL NOT NULL DEFAULT FALSE,
-             
-             FOREIGN KEY (user_id) REFERENCES " . $this->SiteUsersTable() . " (id)
-         );";
-         $client->query($permissions_create_query) or SQL_Exc($client);
         
         $addUserProc = $this->createProc_AddUser($client);
         assert($addUserproc);
         
+        //Add Admin account if missing
+        if ((int)$client->queryToArray('SELECT COUNT(*) "X" FROM ' . $this->SiteUsersTable() . " WHERE username = 'Admin';")[0]['X'] <= 0)
+        {
+            $this->AddAdminAccount($client);
+        }
+
+        //Ensure Admin has full permissions
+        $client->query(
+            "UPDATE " . $this->SiteUsersTable() . " SET perm_backup=TRUE, perm_restore=TRUE, perm_edit=TRUE, perm_manage_users=TRUE WHERE username='Admin';"
+        ) or Exc($client->error_get_last);
     }
 
     public function CommentsTable($column = null)
@@ -267,16 +259,6 @@ class DBSchema
     	return $str;
     }
 
-    public function PermissionsTable($col = null)
-    {
-        $str = $this->Database($this->PermissionsName);
-        if ($col != null)
-        {
-            $str = $str . "." . $col;
-        }
-        return $str;
-    }
-
     public function Database($table = null)
     {
         $str = $this->DatabaseName;
@@ -322,6 +304,12 @@ class DBSchema
     {
         $drop_query = "DROP DATABASE IF EXISTS " . $this->DatabaseName;
         $client->query($drop_query) or Exc($client->error_get_last);
+    }
+
+    private function addAdminAccount($client)
+    {
+        $hashed = SiteUser::HashPassword(DEFAULT_ADMIN_PASS);
+        $client->CreateSiteUser('Admin', $hashed);
     }
 }
 
