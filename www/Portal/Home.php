@@ -14,7 +14,11 @@ require(__DIR__ . '/../' . 'layout/header.php');
 
 ?>
 
-<a href="../Logout.php">Logout</a>
+<ul list-style-type="square">
+<li><a href="Profile.php">Profile</a></li>
+<li><a href="../Logout.php">Logout</a></li>
+</ul>
+
 
 <?php
 require(__DIR__ . '/../' . 'layout/footer.php');
