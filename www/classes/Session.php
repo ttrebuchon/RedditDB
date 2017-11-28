@@ -19,18 +19,6 @@ class Session
     public $user;
     public $sql;
 
-    function __get($name)
-    {
-        if (substr($name, 0, 3) === 'can')
-        {
-            if (in_array(substr($name, 3), $this->permissions))
-            {
-                return $this->permissions[$name];
-            }
-        }
-        
-    }
-
     public function __construct($sql)
     {
         $this->sql = $sql;

@@ -10,7 +10,22 @@ class SiteUser
 
     const PermissionNames = ['ManageUsers', 'Backup', 'Restore', 'Edit'];
 
-
+    function __get($name)
+    {
+        if (substr($name, 0, 3) === 'can')
+        {
+            if (array_key_exists(substr($name, 3), $this->permissions))
+            {
+                return $this->permissions[substr($name, 3)];
+            }
+            else
+            {
+                throw new Exception('Permission does not exists "' . $name . '"');
+            }
+        }
+        
+        return null;
+    }
 
 
     public function __construct()
