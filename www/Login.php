@@ -31,7 +31,7 @@ if (isset($_POST['submit']))
             $session->Login($username, $password);
 
             //Validation is good, continue
-            header('Location: Portal/home.php');
+            header('Location: Portal/Home.php');
             exit();
         }
         catch (LoginException $ex)

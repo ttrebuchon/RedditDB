@@ -68,7 +68,7 @@ if (isset($_POST['submit']))
 
             $session->Login($username, $_POST['password']);
 
-            header('Location: Portal/home.php');
+            header('Location: Portal/Home.php');
         }
     }
 
