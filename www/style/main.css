@@ -3,6 +3,15 @@
 }
 
 a {
-	/* color: #EF1F2F; */
 	text-decoration: none;
+}
+
+.HeadLinks
+{
+	/* margin: 1cm 2cm 1.5cm 1cm; */
+	margin: 0.5cm 0.5cm 0.1cm 1cm;
+}
+
+.MainPage {
+	margin: 2cm 0cm 0cm 2cm;
 }
