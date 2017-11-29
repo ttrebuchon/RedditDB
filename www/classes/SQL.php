@@ -1222,6 +1222,83 @@ class RedditSQLClient
         }
     }
 
+    public function GetWatchedPosts($name)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT * FROM ' . $this->schema->PostsTable() . 
+                ' JOIN ' .
+                $this->schema->SubredditsTable() .
+                ' ON ' .
+                $this->schema->PostsTable('subreddit_id') .
+                ' = ' .
+                $this->schema->SubredditsTable('subreddit_id') .
+                ' WHERE id IN (SELECT post_id FROM ' . 
+                $this->schema->WatchedPostsTable() . 
+                ' JOIN ' . $this->schema->SiteUsersTable() . 
+                ' ON user_id = id WHERE username=?)'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $name);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_assoc();
+        
+        $posts = [];
+        if ($res === null)
+        {
+            return $posts;
+        }
+        if (array_key_exists(0, $res))
+        {
+            foreach ($res as $postRow)
+            {
+                $post = new SelfPost();
+                $post->author = $postRow['author'];
+                $post->title = $postRow['title'];
+                $post->id = $postRow['id'];
+                $post->isSelf = $postRow['text'] !== null;
+                $post->score = $postRow['score'];
+                $post->link = $postRow['link'];
+                $post->subreddit = $postRow['subreddit_name'];
+                $post->subreddit_id = $postRow['subreddit_id'];
+                $post->utc_timestamp = $postRow['creation_timestamp'];
+
+                $post->text = $postRow['text'];
+                $post->text_html = $postRow['text_html'];
+                
+                array_push($posts, $post);
+            }
+        }
+        else
+        {
+            $post = new SelfPost();
+            $post->author = $res['author'];
+            $post->title = $res['title'];
+            $post->id = $res['id'];
+            $post->isSelf = $res['text'] !== null;
+            $post->score = $res['score'];
+            $post->link = $res['link'];
+            $post->subreddit = $res['subreddit_name'];
+            $post->subreddit_id = $res['subreddit_id'];
+            $post->utc_timestamp = $res['creation_timestamp'];
+
+            $post->text = $res['text'];
+            $post->text_html = $res['text_html'];
+
+            array_push($posts, $post);
+        }
+        
+
+        return $posts;
+    }
+
 
 
 

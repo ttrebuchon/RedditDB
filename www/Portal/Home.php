@@ -69,9 +69,28 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
                 <table id="WatchedPosts" border=1 class="ExpandTable">
                     <tr>
                         <td><b>ID</b></td>
-                        <td><b>Name</b></td>
+                        <td><b>Author</b></td>
+                        <td><b>Title</b></td>
                         <td><b>Score</b></td>
                     </tr>
+                    <?php
+                        $wPosts = $sql->GetWatchedPosts($session->user->name);
+                        if ($wPosts !== null)
+                        {
+                            foreach ($wPosts as $post)
+                            {
+                                echo '<tr><td>' . 
+                                $post->id . 
+                                '</td><td>' .
+                                $post->author .
+                                '</td><td>' .
+                                $post->title .
+                                '</td><td>' .
+                                $post->score .
+                                '</td></tr>';
+                            }
+                        }
+                    ?>
                 </table>
             </div>
         </td>
