@@ -2,6 +2,7 @@
 
 require_once(__DIR__ . '/../' . 'classes/Schema.php');
 require_once(__DIR__ . '/../' . 'classes/SiteUser.php');
+require_once(__DIR__ . '/../' . 'classes/Reddit.php');
 
 function Exc($msg)
 {
@@ -1136,6 +1137,92 @@ class RedditSQLClient
         );
         $query->execute() or SQL_Exc($this->connection);
     }
+
+    public function GetWatchedUsers($name)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT * FROM ' . $this->schema->UsersTable() . ' WHERE user_name IN (SELECT reddit_user FROM ' . $this->schema->WatchedUsersTable() . ' JOIN ' . $this->schema->SiteUsersTable() . ' ON user_id = id WHERE username=?)'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $name);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_assoc();
+        
+
+        $users = [];
+        if ($res === null)
+        {
+            return $users;
+        }
+        if (array_key_exists(0, $res))
+        {
+            foreach ($res as $userRow)
+            {
+                $usr = new User();
+                $usr->name = $userRow['user_name'];
+                $usr->id = $userRow['id'];
+                $usr->utc_timestamp = $userRow['utc_created'];
+                $usr->link_score = $userRow['link_score'];
+                $usr->comment_score = $userRow['comment_score'];
+                array_push($users, $usr);
+            }
+        }
+        else
+        {
+            $usr = new User();
+            $usr->name = $res['user_name'];
+            $usr->id = $res['id'];
+            $usr->utc_timestamp = $res['utc_created'];
+            $usr->link_score = $res['link_score'];
+            $usr->comment_score = $res['comment_score'];
+            array_push($users, $usr);
+        }
+        
+
+        return $users;
+    }
+
+    public function GetWatchedSubreddits($name)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT * FROM ' . $this->schema->SubredditsTable() . ' WHERE subreddit_id IN (SELECT subreddit_id FROM ' . $this->schema->WatchedSubredditsTable() . ' JOIN ' . $this->schema->SiteUsersTable() . ' ON user_id = id WHERE username=?)'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $name);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_assoc();
+        
+        if ($res === null)
+        {
+            return [];
+        }
+        if (array_key_exists(0, $res))
+        {
+            return array_column($res, 'subreddit_name');
+        }
+        else
+        {
+            return [ $res['subreddit_name'] ];
+        }
+    }
+
+
 
 
 
