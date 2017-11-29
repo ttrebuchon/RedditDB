@@ -1099,9 +1099,42 @@ class RedditSQLClient
         $user->fname = $res['fname'];
         $user->lname = $res['lname'];
         $user->age = (int)$res['age'];
-        $user->telephone = $res['telephone'];
+        $user->telephone = $res['tele'];
         $user->email = $res['email'];
         $user->address = $res['address'];
+    }
+
+    public function updateSiteUserInfo($user)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'UPDATE ' . $this->schema->SiteUsersTable() . ' SET 
+                        fname=?,
+                        lname=?,
+                        age=?,
+                        tele=?,
+                        email=?,
+                        address=?
+                    WHERE username=?'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('ssissss',
+            $user->fname,
+            $user->lname,
+            $user->age,
+            $user->telephone,
+            $user->email,
+            $user->address,
+            $user->name
+        );
+        $query->execute() or SQL_Exc($this->connection);
     }
 
 
