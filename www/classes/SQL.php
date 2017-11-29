@@ -1154,8 +1154,7 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_assoc();
-        
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
 
         $users = [];
         if ($res === null)
@@ -1206,7 +1205,7 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_assoc();
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
         
         if ($res === null)
         {
@@ -1248,7 +1247,7 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_assoc();
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
         
         $posts = [];
         if ($res === null)
@@ -1349,7 +1348,7 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_assoc();
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
         
         $comments = [];
         if ($res === null)
