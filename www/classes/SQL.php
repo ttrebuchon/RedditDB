@@ -32,6 +32,15 @@ class RedditSQLClient
             throw new Exception(htmlspecialchars($this->connection->connect_error));
             //die("Connection failed! " . $this->connection->connect_error);
         }
+
+        try
+        {
+            $this->endTransaction();
+        }
+        catch (Exception $ex)
+        {
+            
+        }
     }
 
     function __destruct()
