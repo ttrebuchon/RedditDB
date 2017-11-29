@@ -100,9 +100,28 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
                 <table id="WatchedComments" border=1 class="ExpandTable">
                     <tr>
                         <td><b>ID</b></td>
+                        <td><b>Author</b></td>
                         <td><b>Text</b></td>
                         <td><b>Score</b></td>
                     </tr>
+                    <?php
+                        $wComments = $sql->GetWatchedComments($session->user->name);
+                        if ($wComments !== null)
+                        {
+                            foreach ($wComments as $comment)
+                            {
+                                echo '<tr><td>' . 
+                                $comment->id . 
+                                '</td><td>' .
+                                $comment->author .
+                                '</td><td>' .
+                                $comment->text .
+                                '</td><td>' .
+                                $comment->score .
+                                '</td></tr>';
+                            }
+                        }
+                    ?>
                 </table>
             </div>
         </td>

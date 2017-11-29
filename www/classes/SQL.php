@@ -1299,6 +1299,109 @@ class RedditSQLClient
         return $posts;
     }
 
+    public function GetWatchedComments($name)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                'SELECT ' .
+                $this->schema->CommentsTable('id') .
+                ', ' .
+                $this->schema->CommentsTable('author') .
+                ', ' .
+                $this->schema->CommentsTable('text') .
+                ', ' .
+                $this->schema->CommentsTable('text_html') .
+                ', ' .
+                $this->schema->CommentsTable('parent_id') .
+                ', ' .
+                $this->schema->CommentsTable('permalink') .
+                ', ' .
+                $this->schema->CommentsTable('post_id') .
+                ', ' .
+                $this->schema->CommentsTable('score') .
+                ', ' .
+                $this->schema->SubredditsTable('subreddit_name') .
+                ' FROM ' . $this->schema->CommentsTable() . 
+                ' JOIN ' .
+                $this->schema->PostsTable() .
+                ' ON post_id = ' .
+                $this->schema->PostsTable('id') .
+                ' JOIN ' .
+                $this->schema->SubredditsTable() .
+                ' ON ' .
+                $this->schema->PostsTable('subreddit_id') .
+                ' = ' .
+                $this->schema->SubredditsTable('subreddit_id') .
+                ' WHERE ' .
+                $this->schema->CommentsTable('id') .
+                ' IN (SELECT comment_id FROM ' . 
+                $this->schema->WatchedCommentsTable() . 
+                ' JOIN ' . $this->schema->SiteUsersTable() . 
+                ' ON user_id = id WHERE username=?)'
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('s', $name);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_assoc();
+        
+        $comments = [];
+        if ($res === null)
+        {
+            return $comments;
+        }
+        if (array_key_exists(0, $res))
+        {
+            foreach ($res as $commentRow)
+            {
+                $comment = new Comment();
+                $comment->subreddit = $commentRow['subreddit_name'];
+                $comment->subreddit_id = $commentRow['subreddit_id'];
+                $comment->post_id = $commentRow['post_id'];
+                $comment->replies = null;
+                $comment->id = $commentRow['id'];
+                $comment->score = $commentRow['score'];
+                $comment->text = $commentRow['text'];
+                $comment->text_html = $commentRow['text_html'];
+                $comment->author = $commentRow['author'];
+                $comment->parent_id = $commentRow['parent_id'];
+                $comment->utc_timestamp = null;
+                $comment->permalink = $commentRow['permalink'];
+
+                
+                array_push($comments, $comment);
+            }
+        }
+        else
+        {
+            $comment = new Comment();
+            $comment->subreddit = $res['subreddit_name'];
+            $comment->subreddit_id = $res['subreddit_id'];
+            $comment->post_id = $res['post_id'];
+            $comment->replies = null;
+            $comment->id = $res['id'];
+            $comment->score = $res['score'];
+            $comment->text = $res['text'];
+            $comment->text_html = $res['text_html'];
+            $comment->author = $res['author'];
+            $comment->parent_id = $res['parent_id'];
+            $comment->utc_timestamp = null;
+            $comment->permalink = $res['permalink'];
+
+            
+            array_push($comments, $comment);
+        }
+        
+
+        return $comments;
+    }
+
 
 
 
