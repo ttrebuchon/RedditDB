@@ -134,7 +134,7 @@ class DBSchema
          )";
          $client->query($watched_subreddits_create_query) or Exc($client->error_get_last);
          
-         $watched_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedPostsTable() .
+         $watched_users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->WatchedUsersTable() .
          " (
         		user_id INT NOT NULL,
         		reddit_user VARCHAR(20) NOT NULL,
