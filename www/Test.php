@@ -4,9 +4,9 @@ try
     ini_set("display_errors", "stdout");
     //ini_set("max_execution_time", "30");
     set_time_limit(30);
-    require('includes/config.php');
+    require_once('includes/config.php');
 
-    include("classes/Reddit.php");
+    require_once("classes/Reddit.php");
 
 function testWrite($filepath, $data)
 {
