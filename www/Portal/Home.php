@@ -14,8 +14,29 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
             <div class="DataBox">
                 <table id="WatchedUsers" border=1 class="ExpandTable">
                     <tr>
-                        <td>Name</td>
+                        <td><b>ID</b></td>
+                        <td><b>Name</b></td>
+                        <td><b>Comment Score</b></td>
+                        <td><b>Link Score</b></td>
                     </tr>
+                    <?php
+                        $wUsers = $sql->GetWatchedUsers($session->user->name);
+                        if ($wUsers !== null)
+                        {
+                            foreach ($wUsers as $usr)
+                            {
+                                echo '<tr><td>' . 
+                                $usr->id . 
+                                '</td><td>' . 
+                                $usr->name . 
+                                '</td><td>' .
+                                $usr->comment_score .
+                                '</td><td>' .
+                                $usr->link_score .
+                                '</td></tr>';
+                            }
+                        }
+                    ?>
                 </table>
             </div>
         </td>
@@ -24,8 +45,21 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
             <div class="DataBox">
                 <table id="WatchedSubreddits" border=1 class="ExpandTable">
                     <tr>
-                        <td>Name</td>
+                        <td><b>Name</b></td>
                     </tr>
+                    <?php
+                        $wSubs = $sql->GetWatchedSubreddits($session->user->name);
+                        if ($wSubs !== null)
+                        {
+                            foreach ($wSubs as $sub)
+                            {
+                                echo '<tr><td>' . 
+                                '/r/' .
+                                $sub . 
+                                '</td></tr>';
+                            }
+                        }
+                    ?>
                 </table>
             </div>
         </td>
@@ -34,8 +68,9 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
             <div class="DataBox">
                 <table id="WatchedPosts" border=1 class="ExpandTable">
                     <tr>
-                        <td>ID</td>
-                        <td>Name</td>
+                        <td><b>ID</b></td>
+                        <td><b>Name</b></td>
+                        <td><b>Score</b></td>
                     </tr>
                 </table>
             </div>
@@ -45,8 +80,9 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
             <div class="DataBox">
                 <table id="WatchedComments" border=1 class="ExpandTable">
                     <tr>
-                        <td>ID</td>
-                        <td>Text</td>
+                        <td><b>ID</b></td>
+                        <td><b>Text</b></td>
+                        <td><b>Score</b></td>
                     </tr>
                 </table>
             </div>
