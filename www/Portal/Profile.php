@@ -24,9 +24,7 @@ if (isset($_POST['fname']))
 
 ?>
 
-<br />
-<br />
-<br />
+
 <form id="InfoForm" name="InfoForm" role="form" method="post" action="" autocomplete="off">
 <table border=1>
     <tr>
