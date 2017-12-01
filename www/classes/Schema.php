@@ -146,9 +146,11 @@ class DBSchema
          $client->query($watched_users_create_query) or Exc($client->error_get_last);
          
          $queue_create_query = "CREATE TABLE IF NOT EXISTS " . $this->QueueTable() . " (
-         	timestamp TIMESTAMP,
-         	type INT,
-         	request TEXT
+         	timestamp TIMESTAMP NOT NULL,
+         	type bit(2) NOT NULL,
+         	request TEXT,
+         	
+         	CHECK(type >= 0 AND type <= 3)
          )";
          $client->query($queue_create_query) or Exc($client->error_get_last);
         
