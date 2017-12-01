@@ -30,7 +30,6 @@ class RedditSQLClient
 
         if ($this->connection->connect_error) {
             throw new Exception(htmlspecialchars($this->connection->connect_error));
-            //die("Connection failed! " . $this->connection->connect_error);
         }
 
         try
@@ -1224,9 +1223,13 @@ class RedditSQLClient
         {
             return array_column($res, 'subreddit_name');
         }
-        else
+        else if (array_key_exists('subreddit_name', $res))
         {
             return [ $res['subreddit_name'] ];
+        }
+        else
+        {
+            return [ ];
         }
     }
 
