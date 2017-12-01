@@ -96,8 +96,16 @@ class DBSchema
                 perm_backup BOOL NOT NULL DEFAULT FALSE,
                 perm_restore BOOL NOT NULL DEFAULT FALSE,
                 perm_edit BOOL NOT NULL DEFAULT FALSE,
-                perm_manage_users BOOL NOT NULL DEFAULT FALSE
+                perm_manage_users BOOL NOT NULL DEFAULT FALSE,
 
+
+                CHECK(age >= 0),
+                CHECK(tele = NULL OR CHAR_LENGTH(tele) = 10),
+
+                CHECK(perm_backup = FALSE OR perm_backup = TRUE),
+                CHECK(perm_restore = FALSE OR perm_backup = TRUE),
+                CHECK(perm_edit = FALSE OR perm_backup = TRUE),
+                CHECK(perm_manage_users = FALSE OR perm_backup = TRUE)
         )";
         $client->query($site_users_create_query) or Exc($client->error_get_last);
         

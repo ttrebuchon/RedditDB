@@ -10,12 +10,60 @@ require(__DIR__ . '/../' . 'layout/header_auth.php');
 
 if (isset($_POST['fname']))
 {
-    $session->user->fname = htmlspecialchars($_POST['fname']);
-    $session->user->lname = htmlspecialchars($_POST['lname']);
-    $session->user->age = (int)($_POST['age']);
-    $session->user->telephone = htmlspecialchars($_POST['telephone']);
-    $session->user->email = htmlspecialchars($_POST['email']);
-    $session->user->address = htmlspecialchars($_POST['address']);
+    if (htmlspecialchars($_POST['fname']) != null)
+    {
+        $session->user->fname = htmlspecialchars($_POST['fname']);
+    }
+    else
+    {
+        $session->user->fname = null;
+    }
+
+    if (htmlspecialchars($_POST['lname']) != null)
+    {
+        $session->user->lname = htmlspecialchars($_POST['lname']);
+    }
+    else
+    {
+        $session->user->lname = null;
+    }
+
+    if ($_POST['age'] != null)
+    {
+        $session->user->age = (int)$_POST['age'];
+    }
+    else
+    {
+        $session->user->age = null;
+    }
+
+    if (htmlspecialchars($_POST['telephone']) != null)
+    {
+        $session->user->telephone = htmlspecialchars($_POST['telephone']);
+    }
+    else
+    {
+        $session->user->telephone = null;
+    }
+    
+    if (htmlspecialchars($_POST['email']) != null)
+    {
+        $session->user->email = htmlspecialchars($_POST['email']);
+    }
+    else
+    {
+        $session->user->email = null;
+    }
+
+    if (htmlspecialchars($_POST['address']) != null)
+    {
+        $session->user->address = htmlspecialchars($_POST['address']);
+    }
+    else
+    {
+        $session->user->address = null;
+    }
+    
 
     $sql->updateSiteUserInfo($session->user);
 }
@@ -56,7 +104,7 @@ if (isset($_POST['fname']))
             <b>Telephone</b>
         </td>
         <td>
-            <input id="telephone" name="telephone" placeholder="Telephone" value="<?php echo $session->user->telephone; ?>">
+            <input id="telephone" name="telephone" placeholder="Telephone" type="tel" value="<?php echo $session->user->telephone; ?>">
         </td>
     </tr>
     <tr>
@@ -64,7 +112,7 @@ if (isset($_POST['fname']))
             <b>Email</b>
         </td>
         <td>
-            <input id="email" name="email" placeholder="Email" value="<?php echo $session->user->email; ?>">
+            <input id="email" name="email" placeholder="Email" type="email" value="<?php echo $session->user->email; ?>">
         </td>
     </tr>
     <tr>
