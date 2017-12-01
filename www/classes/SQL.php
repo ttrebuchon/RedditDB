@@ -1415,6 +1415,66 @@ class RedditSQLClient
 
 
 
+    function obliterateSubreddit($sub)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        if ($sub === null || gettype($sub) !== 'string')
+        {
+            throw new Exception('Tried to delete null subreddit.');
+        }
+
+        $query = 'CALL ' . $this->schema->Database('ObliterateSubreddit') . '(?)';
+        
+        $stmt = $this->connection->prepare($query);
+
+        if (false === $stmt) {
+            SQL_Exc($this->connection);
+        }
+
+        if (false === $stmt->bind_param("s", $sub))
+        {
+            SQL_Exc($stmt);
+        }
+
+        if (false === $stmt->execute()) {
+            SQL_Exc($stmt);
+        }
+    }
+
+    function obliteratePost($id)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        if ($id === null || gettype($id) !== 'string')
+        {
+            throw new Exception('Tried to delete null subreddit.');
+        }
+
+        $query = 'CALL ' . $this->schema->Database('ObliteratePost') . '(?)';
+        
+        $stmt = $this->connection->prepare($query);
+
+        if (false === $stmt) {
+            SQL_Exc($this->connection);
+        }
+
+        if (false === $stmt->bind_param("s", $id))
+        {
+            SQL_Exc($stmt);
+        }
+
+        if (false === $stmt->execute()) {
+            SQL_Exc($stmt);
+        }
+    }
+
+
+
 
 
     public function startTransaction()

@@ -163,7 +163,10 @@ class DBSchema
          $client->query($queue_create_query) or Exc($client->error_get_last);
         
         $addUserProc = $this->createProc_AddUser($client);
-        assert($addUserproc);
+        assert($addUserProc);
+
+        $addObliterateProc = $this->createProc_Obliterate($client);
+        assert($addObliterateProc);
         
         //Add Admin account if missing
         if ((int)$client->queryToArray('SELECT COUNT(*) "X" FROM ' . $this->SiteUsersTable() . " WHERE username = 'Admin';")[0]['X'] <= 0)
@@ -315,6 +318,125 @@ class DBSchema
             END';
         $res = $client->query($query);
         return $res === true;
+    }
+
+    
+
+    public function createProc_ObliterateSubreddit($client)
+    {
+        $proc = 'ObliterateSubreddit';
+        $query_drop = 'DROP PROCEDURE IF EXISTS '
+            . $this->Database($proc);
+        $client->query($query_drop);
+
+        $query = "CREATE PROCEDURE {$this->Database($proc)} (
+                    name TEXT
+                )
+            BEGIN
+                DECLARE sub_id VARCHAR(128);
+
+                DECLARE EXIT HANDLER FOR SQLEXCEPTION ROLLBACK;
+                DECLARE EXIT HANDLER FOR SQLWARNING ROLLBACK;
+
+                SELECT subreddit_id INTO sub_id FROM {$this->SubredditsTable()}
+                WHERE subreddit_name=name LIMIT 1;
+
+
+                START TRANSACTION;
+
+                DELETE FROM {$this->WatchedCommentsTable()}
+                    WHERE comment_id IN
+                    (
+                        SELECT id FROM {$this->CommentsTable()}
+                            WHERE post_id IN
+                            (
+                                SELECT id FROM {$this->PostsTable()}
+                                    WHERE subreddit_id=sub_id
+                            )
+                    );
+
+                UPDATE {$this->CommentsTable()} 
+                    SET parent_id=NULL WHERE post_id IN
+                    (
+                        SELECT id FROM {$this->PostsTable()}
+                            WHERE subreddit_id=sub_id
+                    );
+                
+                DELETE FROM {$this->CommentsTable()}
+                    WHERE post_id IN
+                    (
+                        SELECT id FROM {$this->PostsTable()}
+                            WHERE subreddit_id=sub_id
+                    );
+
+                DELETE FROM {$this->WatchedPostsTable()}
+                    WHERE post_id IN
+                    (
+                        SELECT id FROM {$this->PostsTable()}
+                            WHERE subreddit_id=sub_id
+                    );
+
+                
+                DELETE FROM {$this->PostsTable()} 
+                    WHERE subreddit_id=sub_id;
+
+                DELETE FROM {$this->WatchedSubredditsTable()}
+                    WHERE subreddit_id=sub_id;
+                
+                DELETE FROM {$this->SubredditsTable()}
+                    WHERE subreddit_id=sub_id;
+                COMMIT;
+            END";
+        $res = $client->query($query);
+        return $res === true;
+    }
+
+    public function createProc_ObliteratePost($client)
+    {
+        $proc = 'ObliteratePost';
+        $query_drop = 'DROP PROCEDURE IF EXISTS '
+            . $this->Database($proc);
+        $client->query($query_drop);
+
+        $query = "CREATE PROCEDURE {$this->Database($proc)} (
+                    del_id TEXT
+                )
+            BEGIN
+
+                DECLARE EXIT HANDLER FOR SQLEXCEPTION ROLLBACK;
+                DECLARE EXIT HANDLER FOR SQLWARNING ROLLBACK;
+
+
+                START TRANSACTION;
+
+                DELETE FROM {$this->WatchedCommentsTable()}
+                    WHERE comment_id IN
+                    (
+                        SELECT id FROM {$this->CommentsTable()}
+                            WHERE post_id=del_id
+                    );
+
+                UPDATE {$this->CommentsTable()} 
+                    SET parent_id=NULL WHERE post_id=del_id;
+                
+                DELETE FROM {$this->CommentsTable()}
+                    WHERE post_id=del_id;
+
+                DELETE FROM {$this->WatchedPostsTable()}
+                    WHERE post_id=del_id;
+                
+                DELETE FROM {$this->PostsTable()} WHERE id=del_id;
+
+                COMMIT;
+            END";
+        $res = $client->query($query);
+        return $res === true;
+    }
+
+    public function createProc_Obliterate($client)
+    {
+        $this->createProc_ObliterateSubreddit($client);
+        $this->createProc_ObliteratePost($client);
     }
 
 
