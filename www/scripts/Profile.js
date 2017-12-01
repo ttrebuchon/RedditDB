@@ -36,6 +36,36 @@ function ValidateEmail(addr)
     return true;
 }
 
+function ValidateAge(age)
+{
+    if (age === '')
+    {
+        return true;
+    }
+
+    try
+    {
+        let ageNum = parseInt(age);
+        if (ageNum < 0)
+        {
+            return false;
+        }
+
+        if (ageNum !== parseFloat(age))
+        {
+            return false;
+        }
+    }
+    catch (e)
+    {
+        return false;
+    }
+
+
+
+    return true;
+}
+
 function Apply()
 {
     let errElem = document.getElementById('ErrorMsg');
@@ -58,6 +88,13 @@ function Apply()
     if (!ValidateEmail(emailAddr))
     {
         errs.push('Invalid email syntax!');
+    }
+
+    let ageIn = document.getElementById('age');
+    let age = ageIn.value;
+    if (!ValidateAge(age))
+    {
+        errs.push('Age must be a valid, positive integer');
     }
 
 

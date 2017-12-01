@@ -48,7 +48,7 @@ if (isset($_POST['fname']))
             <b>Age</b>
         </td>
         <td>
-            <input id="age" name="age" placeholder="Age" value="<?php echo $session->user->age; ?>">
+            <input id="age" name="age" placeholder="Age" type="number" value="<?php echo $session->user->age; ?>">
         </td>
     </tr>
     <tr>
