@@ -1452,7 +1452,7 @@ class RedditSQLClient
 
         if ($id === null || gettype($id) !== 'string')
         {
-            throw new Exception('Tried to delete null subreddit.');
+            throw new Exception('Tried to delete null post.');
         }
 
         $query = 'CALL ' . $this->schema->Database('ObliteratePost') . '(?)';
