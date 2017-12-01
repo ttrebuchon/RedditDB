@@ -13,7 +13,7 @@ a {
 }
 
 .MainPage {
-	margin: 2cm 0cm 0cm 2cm;
+	margin: 2cm 2cm 0cm 2cm;
 }
 
 .DataBox
@@ -27,4 +27,25 @@ a {
 {
 	width:auto;
 	width:100%
+}
+
+.SectionBoxBordered
+{
+	border: 2px solid gray;
+	margin: auto;
+	width: 75%;
+	display: flex;
+	flex-flow: column wrap;
+	align-items: center;
+	padding-bottom: 10px;
+}
+
+.SectionBox
+{
+	margin: auto;
+	width: 75%;
+	display: flex;
+	flex-flow: column wrap;
+	align-items: center;
+	padding-bottom: 10px;
 }

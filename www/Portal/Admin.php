@@ -10,11 +10,25 @@ if (!$session->HasAdminPrivs())
     exit();
 }
 
-
-
 ?>
 
+<label style="font-size:large">
+    Data Deletion
+</label>
+<div class="SectionBoxBordered">
+    <label style="text-align:center;width:100%">Obliterate Subreddit(s)</label>
+    <form id="obliterate_subs_form" name="ObliterateSubsForm" role="form" method="post" action="" autocomplete="off" class="SectionBox">
+        <textarea id="obliterate_subreddits" style="width:75%;resize:vertical"></textarea>
+    </form>
+    <input type="submit" value="Obliterate" onclick="obliterate_subs()">
+</div>
 
+
+
+
+
+
+<script src="/scripts/Admin.js"></script>
 
 <?php
 
