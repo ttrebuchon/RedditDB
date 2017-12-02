@@ -4,7 +4,7 @@ require_once(__DIR__ . '/../' . 'classes/SiteUser.php');
 
 class DBSchema
 {
-    public $DatabaseName = "RedditDB";
+    public $DatabaseName = DB_NAME;
     public $PostsName = "Posts";
     public $CommentsName = "Comments";
     public $UsersName = "Users";
@@ -19,8 +19,15 @@ class DBSchema
         
     public function Initialize($client)
     {
-        $DB_create_query = "CREATE DATABASE IF NOT EXISTS " . $this->DatabaseName;
-        $client->query($DB_create_query) or SQL_Exc($client);
+        if (null !== CREATE_DB)
+        {
+            if (CREATE_DB == true)
+            {
+                $DB_create_query = "CREATE DATABASE IF NOT EXISTS " . $this->DatabaseName;
+                $client->query($DB_create_query) or SQL_Exc($client);
+            }
+        }
+        
 
         $users_create_query = "CREATE TABLE IF NOT EXISTS " . $this->DatabaseName .
         "." . $this->UsersName .
