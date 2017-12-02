@@ -26,13 +26,14 @@ if (!$session->isAuthenticated())
     </p>
     <ul list-style-type="square">
         <li><a href="/Portal/Home.php">Home</a></li>
-        <li><a href="/Portal/Profile.php">Profile</a></li>
         <?php
             if ($session->hasAdminPrivs())
             {
                 echo '<li><a href="/Portal/Admin.php">Administrator</a></li>';
             }
         ?>
+        <li><a href="/Portal/Data.php">Data</a></li>
+        <li><a href="/Portal/Profile.php">Profile</a></li>
         <li><a href="/Logout.php">Logout</a></li>
     </ul>
 </div>
