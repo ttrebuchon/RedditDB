@@ -103,6 +103,20 @@ function SubredditCol($name)
             <input id="Posts_Score_LTE_Search" name="Posts_Score_LTE_Search" type="number" value="<?php echo $_POST['Posts_Score_LTE_Search']; ?>">
         </td>
     </tr>
+    <tr>
+        <td>
+            <label>Comment Score >=</label>
+        </td>
+        <td>
+            <input id="Comments_Score_GTE_Search" name="Comments_Score_GTE_Search" type="number" value="<?php echo $_POST['Comments_Score_GTE_Search']; ?>">
+        </td>
+        <td>
+            <label>Comment Score <=</label>
+        </td>
+        <td>
+            <input id="Comments_Score_LTE_Search" name="Comments_Score_LTE_Search" type="number" value="<?php echo $_POST['Comments_Score_LTE_Search']; ?>">
+        </td>
+    </tr>
 </table>
 <input type="submit" value="Search">
 </form>

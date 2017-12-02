@@ -1610,8 +1610,8 @@ class RedditSQLClient
                 $link_gte,
                 $link_lte,
                 $title,
-                $pscore_lte,
-                $pscore_gte)
+                $pscore_gte,
+                $pscore_lte)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
@@ -1711,10 +1711,10 @@ class RedditSQLClient
                 $link_gte,
                 $link_lte,
                 $title,
-                $pscore_lte,
                 $pscore_gte,
-                $cscore_lte,
-                $cscore_gte)
+                $pscore_lte,
+                $cscore_gte,
+                $cscore_lte)
     {
         if (!$this->isOpen()) {
             Exc("Connection has not been opened!");
@@ -1803,7 +1803,9 @@ class RedditSQLClient
                                 comment_score >= ? AND 
                                 link_score <= ? AND 
                                 link_score >= ?
-                    )
+                    ) AND
+                    C.score >= ? AND
+                    C.score <= ?
                 ORDER BY id
                 LIMIT 10000;"
             ) or SQL_Exc($this->connection);
@@ -1811,7 +1813,7 @@ class RedditSQLClient
         $sub_param = '%' . $sub . '%';
         $username_param = '%' . $user_name . '%';
         $title_param = '%' . $title . '%';
-        $query->bind_param('ssiisiiii',
+        $query->bind_param('ssiisiiiiii',
             $sub_param,
             $title_param,
             $pmin,
@@ -1820,7 +1822,9 @@ class RedditSQLClient
             $cmax,
             $cmin,
             $lmax,
-            $lmin);
+            $lmin,
+            $comin,
+            $comax);
         $query->execute() or SQL_Exc($this->connection);
         $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
 
