@@ -333,7 +333,7 @@ function SubredditCol($name)
 </table>
 
 
-<script src="/scripts/Data.js"></script>
+<script src="<?php echo ROOT_DIR; ?>/scripts/Data.js"></script>
 <?php
 
 require(__DIR__ . '/../' . 'layout/footer.php');

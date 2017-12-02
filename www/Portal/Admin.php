@@ -47,7 +47,7 @@ if ($session->user->permissions['ManageUsers'] == true)
     {
         $user = htmlspecialchars($_POST['update_user_username']);
 
-        foreach (SiteUser::PermissionNames as $name)
+        foreach (SiteUser::$PermissionNames as $name)
         {
             $permName = "update_user_{$name}";
             $perms[$name] = false;
@@ -74,7 +74,7 @@ if ($session->user->permissions['Backup'] == true)
     {
         if ($_POST['backup_db_action'] == 1)
         {
-            $sql->backup();
+            echo $sql->backup();
             echo '<p>Backed Up!</p>';
         }
     }
@@ -185,7 +185,7 @@ if ($session->user->permissions['Backup'] == true)
 
 
 
-<script src="/scripts/Admin.js"></script>
+<script src="<?php echo ROOT_DIR; ?>/scripts/Admin.js"></script>
 
 <?php
 

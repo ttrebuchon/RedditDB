@@ -4,6 +4,44 @@ require_once(__DIR__ . '/../' . 'classes/Schema.php');
 require_once(__DIR__ . '/../' . 'classes/SiteUser.php');
 require_once(__DIR__ . '/../' . 'classes/Reddit.php');
 
+function get_result_hack_assoc($stmt)
+{
+    $res = array();
+    $stmt->store_result();
+    for ($i = 0; $i < $stmt->num_rows; $i++)
+    {
+        $meta = $stmt->result_metadata();
+        $params = array();
+        while ($field = $meta->fetch_field())
+        {
+            $params[] = &$res[$i][$field->name];
+        }
+        call_user_func_array(array($stmt, 'bind_result'), $params);
+        $stmt->fetch();
+    }
+    return $res;
+}
+
+function get_result_hack($stmt)
+{
+    $res = array();
+    $stmt->store_result();
+    for ($i = 0; $i < $stmt->num_rows; $i++)
+    {
+        $meta = $stmt->result_metadata();
+        $params = array();
+        $j = 0;
+        while ($field = $meta->fetch_field())
+        {
+            $params[] = &$res[$i][$j];
+            $j++;
+        }
+        call_user_func_array(array($stmt, 'bind_result'), $params);
+        $stmt->fetch();
+    }
+    return $res;
+}
+
 function Exc($msg)
 {
     throw new Exception($msg);
@@ -23,6 +61,7 @@ class RedditSQLClient
     {
         $this->schema = new DBSchema();
         $this->connection = new mysqli($host, DBUSER, DBPASS, $db);
+        $this->connection->select_db($this->schema->DatabaseName);
 
         if (false === $this->connection) {
             throw new Exception("Unable to initialize MySQL interface");
@@ -100,7 +139,7 @@ class RedditSQLClient
             Exc("Connection has not been opened!");
         }
             
-        static $query = null;
+        $query = null;
         if ($query == null) {
             $query = $this->connection->prepare(
                 "SELECT COUNT(*) FROM " . $this->schema->DatabaseName
@@ -112,8 +151,12 @@ class RedditSQLClient
         $query->bind_param("s", $id);
 
         $query->execute() or Exc($this->connection->error_get_last);
-        $result = $query->get_result()->fetch_array()[0];
-        return $result > 0;
+        $query->bind_result($out);
+        $query->fetch();
+        $query->close();
+        return $out > 0;
+        // $result = $query->get_result()->fetch_array()[0];
+        // return $result > 0;
     }
 
     function UsersStored_ByID($ids)
@@ -1013,6 +1056,8 @@ class RedditSQLClient
 
         $query->bind_param("s", $name);
         $query->execute() or SQL_Exc($this->connection);
+        $out = get_result_hack($query);
+        return $out[0][0] > 0;
         $result = $query->get_result()->fetch_array();
 
         return ($result[0] > 0);
@@ -1073,8 +1118,10 @@ class RedditSQLClient
 
         $query->bind_param('s', $username);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_array();
-        return $res[0];
+        $out = get_result_hack($query);
+        return $out[0][0];
+        // $res = $query->get_result()->fetch_array();
+        // return $res[0];
     }
 
     public function getSiteUserData($username, &$user)
@@ -1093,7 +1140,8 @@ class RedditSQLClient
 
         $query->bind_param('s', $username);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_assoc();
+        //$res = $query->get_result()->fetch_assoc();
+        $res = get_result_hack_assoc($query)[0];
 
         $user->name = $username;
 
@@ -1191,7 +1239,8 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        //$res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
 
         $users = [];
         if ($res === null)
@@ -1248,7 +1297,8 @@ class RedditSQLClient
 
         $idQuery->bind_param('s', $username);
         $idQuery->execute() or SQL_Exc($this->connection);
-        $id = $idQuery->get_result()->fetch_array()[0];
+        //$id = $idQuery->get_result()->fetch_array()[0];
+        $id = get_result_hack($idQuery)[0][0];
 
         $nameParameters = "(?";
         for ($i = 1; $i < count($names); $i = $i + 1)
@@ -1285,14 +1335,11 @@ class RedditSQLClient
 
         $checkQuery->execute() or SQL_Exc($this->connection);
 
-        $res = $checkQuery->get_result();
-
+        // $res = $checkQuery->get_result();
+        // $existing = array_column($res->fetch_all(), 0);
+        $existing = array_column(get_result_hack($checkQuery), 0);
+        $names = array_diff($names, $existing);
         
-        if (gettype($res) != 'boolean')
-        {
-            $existing = array_column($res->fetch_all(), 0);
-            $names = array_diff($names, $existing);
-        }
 
         
 
@@ -1359,7 +1406,8 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        //$res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
         
         if ($res === null)
         {
@@ -1401,7 +1449,8 @@ class RedditSQLClient
 
         $idQuery->bind_param('s', $username);
         $idQuery->execute() or SQL_Exc($this->connection);
-        $id = $idQuery->get_result()->fetch_array()[0];
+        //$id = $idQuery->get_result()->fetch_array()[0];
+        $id = get_result_hack($idQuery)[0][0];
 
         $nameParameters = "(?";
         for ($i = 1; $i < count($names); $i = $i + 1)
@@ -1447,15 +1496,17 @@ class RedditSQLClient
 
         $checkQuery->execute() or SQL_Exc($this->connection);
 
-        $res = $checkQuery->get_result();
+        // $res = $checkQuery->get_result();
 
         
-        if (gettype($res) != 'boolean')
-        {
-            $existing = array_column($res->fetch_all(), 0);
-            $names = array_diff($names, $existing);
-        }
+        // if (gettype($res) != 'boolean')
+        // {
+        //     $existing = array_column($res->fetch_all(), 0);
+        //     $names = array_diff($names, $existing);
+        // }
 
+        $existing = array_column(get_result_hack($checkQuery), 0);
+        $names = array_diff($names, $existing);
         
 
 
@@ -1531,7 +1582,8 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        //$res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
         
         $posts = [];
         if ($res === null)
@@ -1604,7 +1656,8 @@ class RedditSQLClient
 
         $idQuery->bind_param('s', $username);
         $idQuery->execute() or SQL_Exc($this->connection);
-        $id = $idQuery->get_result()->fetch_array()[0];
+        //$id = $idQuery->get_result()->fetch_array()[0];
+        $id = get_result_hack($idQuery)[0][0];
 
         $idParameters = "(?";
         for ($i = 1; $i < count($ids); $i = $i + 1)
@@ -1641,14 +1694,17 @@ class RedditSQLClient
 
         $checkQuery->execute() or SQL_Exc($this->connection);
 
-        $res = $checkQuery->get_result();
+        // $res = $checkQuery->get_result();
 
         
-        if (gettype($res) != 'boolean')
-        {
-            $existing = array_column($res->fetch_all(), 0);
-            $ids = array_diff($ids, $existing);
-        }
+        // if (gettype($res) != 'boolean')
+        // {
+        //     $existing = array_column($res->fetch_all(), 0);
+        //     $ids = array_diff($ids, $existing);
+        // }
+
+        $existing = array_column(get_result_hack($checkQuery), 0);
+        $ids = array_diff($ids, $existing);
 
         
 
@@ -1749,7 +1805,8 @@ class RedditSQLClient
 
         $query->bind_param('s', $name);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        //$res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
         
         $comments = [];
         if ($res === null)
@@ -1824,7 +1881,8 @@ class RedditSQLClient
 
         $idQuery->bind_param('s', $username);
         $idQuery->execute() or SQL_Exc($this->connection);
-        $id = $idQuery->get_result()->fetch_array()[0];
+        //$id = $idQuery->get_result()->fetch_array()[0];
+        $id = get_result_hack($idQuery)[0][0];
 
         $idParameters = "(?";
         for ($i = 1; $i < count($ids); $i = $i + 1)
@@ -1861,14 +1919,17 @@ class RedditSQLClient
 
         $checkQuery->execute() or SQL_Exc($this->connection);
 
-        $res = $checkQuery->get_result();
+        // $res = $checkQuery->get_result();
 
         
-        if (gettype($res) != 'boolean')
-        {
-            $existing = array_column($res->fetch_all(), 0);
-            $ids = array_diff($ids, $existing);
-        }
+        // if (gettype($res) != 'boolean')
+        // {
+        //     $existing = array_column($res->fetch_all(), 0);
+        //     $ids = array_diff($ids, $existing);
+        // }
+
+        $existing = array_column(get_result_hack($checkQuery), 0);
+        $ids = array_diff($ids, $existing);
 
         
 
@@ -1934,7 +1995,8 @@ class RedditSQLClient
         }
 
         $query->execute() or SQL_Exc($this->connection);
-        $res = array_column($query->get_result()->fetch_all(), 0);
+        // $res = array_column($query->get_result()->fetch_all(), 0);
+        $res = array_column(get_result_hack($query), 0);
 
         return $res;
     }
@@ -2021,7 +2083,8 @@ class RedditSQLClient
         $param = '%' . $subreddit_name . '%';
         $query->bind_param('s', $param);
         $query->execute() or SQL_Exc($this->connection);
-        $res = array_column($query->get_result()->fetch_all(), 0);
+        // $res = array_column($query->get_result()->fetch_all(), 0);
+        $res = array_column(get_result_hack($query), 0);
 
         return $res;
     }
@@ -2074,7 +2137,8 @@ class RedditSQLClient
         $param = '%' . $name . '%';
         $query->bind_param('siiii', $param, $cmax, $cmin, $lmax, $lmin);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        // $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
 
         return $res;
     }
@@ -2175,7 +2239,8 @@ class RedditSQLClient
             $pmin,
             $pmax);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        // $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
 
         return $res;
     }
@@ -2303,7 +2368,8 @@ class RedditSQLClient
             $comin,
             $comax);
         $query->execute() or SQL_Exc($this->connection);
-        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        // $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+        $res = get_result_hack_assoc($query);
 
         return $res;
     }
@@ -2359,7 +2425,7 @@ class RedditSQLClient
         }
         $out = null;
         //return shell_exec('whoami 2>&1');
-        exec("mysqldump --add-drop-table {$this->schema->Database()} -u".DBUSER." -p".DBPASS." 2>&1 1> {$dir}/RedditDB-Backup-".time().".sql", $out);
+        exec("mysqldump --add-drop-table {$this->schema->Database()} -h " . DBHOST ." -u".DBUSER." -p".DBPASS." 2>&1 1> {$dir}/RedditDB-Backup-".time().".sql", $out);
         return var_export($out, true);
         //" | gzip > RedditDB-Backup-".time().".sql.gz"
         if (!$this->isOpen()) {
@@ -2451,7 +2517,7 @@ class RedditSQLClient
 
 
 
-
+?>
 
 
     

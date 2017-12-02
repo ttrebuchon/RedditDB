@@ -139,7 +139,7 @@ require('layout/header.php');
 <br />
 <br />
 <p>
-    <a href="Login.php">Login</a>
+    <a href="<?php echo ROOT_DIR; ?>/Login.php">Login</a>
 </p>
 
 <?php

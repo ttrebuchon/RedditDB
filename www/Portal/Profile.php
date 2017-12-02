@@ -130,7 +130,7 @@ if (isset($_POST['fname']))
 <label id="ErrorMsg"></label>
 
 
-<script src="/scripts/Profile.js"></script>
+<script src="<?php echo ROOT_DIR; ?>/scripts/Profile.js"></script>
 
 <?php
 require(__DIR__ . '/../' . 'layout/footer.php');

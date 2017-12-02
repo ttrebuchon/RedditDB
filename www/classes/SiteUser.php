@@ -8,7 +8,7 @@ class SiteUser
 
     public $permissions = [];
 
-    const PermissionNames = ['ManageUsers', 'Backup', 'Restore', 'Edit'];
+    public static $PermissionNames = ['ManageUsers', 'Backup', 'Restore', 'Edit'];
 
     public $fname;
     public $lname;
@@ -38,7 +38,7 @@ class SiteUser
     public function __construct()
     {
         $this->name = null;
-        foreach (SiteUser::PermissionNames as $name)
+        foreach (SiteUser::$PermissionNames as $name)
         {
             $this->permissions[$name] = null;
             if (array_key_exists($name, $_SESSION))

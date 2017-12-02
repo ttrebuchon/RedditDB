@@ -173,10 +173,10 @@ class DBSchema
          $client->query($queue_create_query) or Exc($client->error_get_last);
         
         $addUserProc = $this->createProc_AddUser($client);
-        assert($addUserProc);
+        //assert($addUserProc);
 
         $addObliterateProc = $this->createProc_Obliterate($client);
-        assert($addObliterateProc);
+        //assert($addObliterateProc);
         
         //Add Admin account if missing
         if ((int)$client->queryToArray('SELECT COUNT(*) "X" FROM ' . $this->SiteUsersTable() . " WHERE username = 'Admin';")[0]['X'] <= 0)

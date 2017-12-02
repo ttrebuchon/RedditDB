@@ -101,7 +101,7 @@ require('layout/header.php');
 <br />
 <br />
 <p>
-<a href="Register.php">Register</a>
+<a href="<?php echo ROOT_DIR; ?>/Register.php">Register</a>
 </p>
 
 <?php
