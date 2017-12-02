@@ -1146,6 +1146,35 @@ class RedditSQLClient
         $query->execute() or SQL_Exc($this->connection);
     }
 
+    public function updateSiteUserPermissions($username, $permissions)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                "UPDATE {$this->schema->SiteUsersTable()} SET 
+                        perm_backup=?,
+                        perm_restore=?,
+                        perm_edit=?,
+                        perm_manage_users=?
+                    WHERE username=?"
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->bind_param('iiiis',
+            $permissions['Backup'],
+            $permissions['Restore'],
+            $permissions['Edit'],
+            $permissions['ManageUsers'],
+            $username
+        );
+        $query->execute() or SQL_Exc($this->connection);
+    }
+
     public function GetWatchedUsers($name)
     {
         if (!$this->isOpen()) {

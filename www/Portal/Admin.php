@@ -37,17 +37,35 @@ if ($session->user->permissions['Edit'] == true)
 if ($session->user->permissions['ManageUsers'] == true)
 {
     $manageUsers = false;
+    $backup = false;
+    $restore = false;
+    $edit = false;
+    $user = null;
+    $perms = [];
+
     if (array_key_exists('update_user_username', $_POST))
     {
-        if (array_key_exists('update_user_accountmng', $_POST))
+        $user = htmlspecialchars($_POST['update_user_username']);
+
+        foreach (SiteUser::PermissionNames as $name)
         {
-            if ($_POST['update_user_accountmng'] === 'on')
+            $permName = "update_user_{$name}";
+            $perms[$name] = false;
+            if (isset($_POST[$permName]))
             {
-                $manageUsers = true;
+                if ($_POST[$permName] === 'on')
+                {
+                    $perms[$name] = true;
+                }
             }
         }
+
+        if (strtolower($user) !== 'admin')
+        {
+            $sql->updateSiteUserPermissions($user, $perms);
+            $session->RefreshData();
+        }
     }
-    var_export($_POST);
 }
 
 
@@ -98,16 +116,16 @@ if ($session->user->permissions['ManageUsers'] == true)
         <input id="update_user_username" name="update_user_username" type="text" placeholder="Username">
         <br />
         Manage Accounts
-        <input id="update_user_accountmng" name="update_user_accountmng" type="checkbox">
+        <input id="update_user_ManageUsers" name="update_user_ManageUsers" type="checkbox">
         <br />
         Backup Database
-        <input id="update_user_backup" name="update_user_backup" type="checkbox">
+        <input id="update_user_Backup" name="update_user_Backup" type="checkbox">
         <br />
         Restore Database
-        <input id="update_user_restore" name="update_user_restore" type="checkbox">
+        <input id="update_user_Restore" name="update_user_Restore" type="checkbox">
         <br />
         Edit Data
-        <input id="update_user_edit" name="update_user_edit" type="checkbox">
+        <input id="update_user_Edit" name="update_user_Edit" type="checkbox">
     </form>
     <input type="submit" value="UpdateUser" onclick="updateUser()">
 </div>
