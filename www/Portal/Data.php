@@ -4,8 +4,6 @@ require_once(__DIR__ . '/../includes/config.php');
 $title = 'Data';
 require(__DIR__ . '/../' . 'layout/header_auth.php');
 
-var_export($_POST);
-
 $searched = false;
 foreach ($_POST as $param)
 {
@@ -119,6 +117,18 @@ function SubredditCol($name)
     </tr>
 </table>
 <input type="submit" value="Search">
+<input id="Watch_Subreddits_Btn" type="button" value="Watch Subreddits" onclick="watchSubreddits()">
+<input id="Watch_Users_Btn" type="button" value="Watch Users" onclick="watchUsers()">
+<input id="Watch_Posts_Btn" type="button" value="Watch Posts" onclick="watchPosts()">
+<input id="Watch_Comments_Btn" type="button" value="Watch Comments" onclick="watchComments()">
+<input id="Watch_All_Btn" type="button" value="Watch All" onclick="watchAll()">
+
+
+
+<input type="hidden" name="Watch_Subreddits_Action" id="Watch_Subreddits_Action" value=0>
+<input type="hidden" name="Watch_Users_Action" id="Watch_Users_Action" value=0>
+<input type="hidden" name="Watch_Posts_Action" id="Watch_Posts_Action" value=0>
+<input type="hidden" name="Watch_Comments_Action" id="Watch_Comments_Action" value=0>
 </form>
 
 <br />
@@ -128,7 +138,7 @@ function SubredditCol($name)
     <tr>
         <td>
             <label>Subreddits</label>
-            <div class="DataBox">
+            <div class="ResultsBox">
                 <table class="ExpandTable" border=1>
                     <thead>
                         <tr>
@@ -141,13 +151,18 @@ function SubredditCol($name)
                             {
                                 if ($_POST['Subreddits_Search'] !== '')
                                 {
-                                    foreach (
-                                        $sql->dataSearch_Subreddits(
-                                            htmlspecialchars($_POST['Subreddits_Search'])
-                                            )
-                                        as $sub)
+                                    $subs = $sql->dataSearch_Subreddits(
+                                        htmlspecialchars($_POST['Subreddits_Search'])
+                                    );
+                                    foreach ($subs as $sub)
                                     {
                                         echo "<tr><td><a href='http://www.reddit.com/r/{$sub}'>/r/{$sub}</a></td></tr>";
+                                    }
+                                    if ($_POST['Watch_Subreddits_Action'] == 1)
+                                    {
+                                        $sql->addWatchedSubreddits(
+                                            $session->user->name,
+                                            $subs);
                                     }
                                 }
                             }
@@ -158,7 +173,7 @@ function SubredditCol($name)
         </td>
         <td>
             <label>Users</label>
-            <div class="DataBox">
+            <div class="ResultsBox">
                 <table class="ExpandTable" border=1>
                     <thead>
                         <tr>
@@ -202,7 +217,7 @@ function SubredditCol($name)
         </td>
         <td>
             <label>Posts</label>
-            <div class="DataBox">
+            <div class="ResultsBox">
                 <table class="ExpandTable" border=1>
                     <thead>
                         <tr>
@@ -249,7 +264,7 @@ function SubredditCol($name)
         </td>
         <td>
             <label>Comments</label>
-            <div class="DataBox">
+            <div class="ResultsBox">
                 <table class="ExpandTable" border=1>
                     <thead>
                         <tr>
@@ -300,6 +315,7 @@ function SubredditCol($name)
 </table>
 
 
+<script src="/scripts/Data.js"></script>
 <?php
 
 require(__DIR__ . '/../' . 'layout/footer.php');
