@@ -73,6 +73,9 @@ class DBSchema
                 permalink VARCHAR(2083),
                 post_id VARCHAR(128) NOT NULL,
                 score INT,
+                depth INT,
+                pathindex INT,
+                numerical_mapping VARCHAR(300),
 
                 FOREIGN KEY (author) REFERENCES " . $this->UsersName . " (user_name),
                 FOREIGN KEY (parent_id) REFERENCES " . $this->CommentsName . " (id),
