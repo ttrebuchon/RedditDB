@@ -1526,6 +1526,186 @@ class RedditSQLClient
 
 
 
+
+    public function dataSearch_Subreddits($subreddit_name)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                "SELECT subreddit_name FROM {$this->schema->SubredditsTable()}
+                    WHERE subreddit_name LIKE ? ORDER BY subreddit_name LIMIT 10000;"
+            ) or SQL_Exc($this->connection);
+        }
+        $param = '%' . $subreddit_name . '%';
+        $query->bind_param('s', $param);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = array_column($query->get_result()->fetch_all(), 0);
+
+        return $res;
+    }
+
+    public function dataSearch_Users($name, $comment_gte, $comment_lte, $link_gte, $link_lte)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $cmax = (int)$comment_lte;
+        if ($comment_lte === '')
+        {
+            $cmax = 2147483647;
+        }
+
+        $cmin = (int)$comment_gte;
+        if ($comment_gte === '')
+        {
+            $cmin = -2147483648;
+        }
+
+        $lmax = (int)$link_lte;
+        if ($link_lte === '')
+        {
+            $lmax = 2147483647;
+        }
+
+        $lmin = (int)$link_gte;
+        if ($link_gte === '')
+        {
+            $lmin = -2147483648;
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                "SELECT user_name, comment_score, link_score
+                 FROM {$this->schema->UsersTable()}
+                    WHERE user_name LIKE ? AND 
+                        comment_score <= ? AND 
+                        comment_score >= ? AND 
+                        link_score <= ? AND 
+                        link_score >= ? 
+                    ORDER BY user_name
+                    LIMIT 10000;"
+            ) or SQL_Exc($this->connection);
+        }
+        $param = '%' . $name . '%';
+        $query->bind_param('siiii', $param, $cmax, $cmin, $lmax, $lmin);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        return $res;
+    }
+
+    public function dataSearch_Posts(
+                $sub,
+                $user_name,
+                $comment_gte,
+                $comment_lte,
+                $link_gte,
+                $link_lte,
+                $title,
+                $pscore_lte,
+                $pscore_gte)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $cmax = (int)$comment_lte;
+        if ($comment_lte === '')
+        {
+            $cmax = 2147483647;
+        }
+
+        $cmin = (int)$comment_gte;
+        if ($comment_gte === '')
+        {
+            $cmin = -2147483648;
+        }
+
+        $lmax = (int)$link_lte;
+        if ($link_lte === '')
+        {
+            $lmax = 2147483647;
+        }
+
+        $lmin = (int)$link_gte;
+        if ($link_gte === '')
+        {
+            $lmin = -2147483648;
+        }
+
+        $pmax = (int)$pscore_lte;
+        if ($pscore_lte === '')
+        {
+            $pmax = 2147483647;
+        }
+
+        $pmin = (int)$pscore_gte;
+        if ($pscore_gte === '')
+        {
+            $pmin = -2147483648;
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                "SELECT id, author, title, score, link,
+                subreddit_name, creation_timestamp AS time
+                FROM {$this->schema->PostsTable()}
+                JOIN {$this->schema->SubredditsTable()}
+                ON {$this->schema->PostsTable('subreddit_id')}
+                =
+                {$this->schema->SubredditsTable('subreddit_id')}
+                    WHERE author IN
+                    (
+                        SELECT user_name
+                        FROM {$this->schema->UsersTable()}
+                            WHERE user_name LIKE ? AND 
+                                comment_score <= ? AND 
+                                comment_score >= ? AND 
+                                link_score <= ? AND 
+                                link_score >= ?
+                    )
+                    AND
+                    subreddit_name LIKE ? AND
+                    title LIKE ? AND
+                    score >= ? AND
+                    score <= ?
+                ORDER BY id
+                LIMIT 10000;"
+            ) or SQL_Exc($this->connection);
+        }
+        $sub_param = '%' . $sub . '%';
+        $username_param = '%' . $user_name . '%';
+        $title_param = '%' . $title . '%';
+        $query->bind_param('siiiissii',
+            $username_param,
+            $cmax, 
+            $cmin,
+            $lmax,
+            $lmin,
+            $sub_param,
+            $title_param,
+            $pmin,
+            $pmax);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        return $res;
+    }
+
+
+
+
+
     public function startTransaction()
     {
         $this->connection->begin_transaction();
