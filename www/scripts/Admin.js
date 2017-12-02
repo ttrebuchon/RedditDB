@@ -76,3 +76,22 @@ function obliteratePosts()
 
     document.forms.ObliteratePostsForm.submit();
 }
+
+function updateUser()
+{
+    let userIn = document.getElementById('update_user_username');
+    let username = userIn.value = userIn.value.replaceAll(' ', '');
+
+    if (username === '')
+    {
+        return;
+    }
+
+    if (username.toLowerCase() === 'admin')
+    {
+        userIn.value = '';
+        return;
+    }
+
+    document.forms.UserPermissionsForm.submit();
+}
