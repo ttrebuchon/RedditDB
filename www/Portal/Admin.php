@@ -68,6 +68,18 @@ if ($session->user->permissions['ManageUsers'] == true)
     }
 }
 
+if ($session->user->permissions['Backup'] == true)
+{
+    if (array_key_exists('backup_db_action', $_POST))
+    {
+        if ($_POST['backup_db_action'] == 1)
+        {
+            $sql->backup();
+            echo '<p>Backed Up!</p>';
+        }
+    }
+}
+
 
 ?>
 
@@ -149,6 +161,23 @@ if ($session->user->permissions['ManageUsers'] == true)
             </td>
         </tr>
     </table>
+</div>
+
+
+<?php endif; ?>
+
+
+<?php if ($session->user->permissions['Backup'] == true): ?>
+<label style="font-size:large">
+    Database Backup
+</label>
+
+
+<div class="SectionBoxBordered">
+        <form id="backup_db_form" name="BackupDBForm" role="form" method="post" action="" autocomplete="off" class="SectionBox">
+            <input id="backup_db_action" name="backup_db_action" type="hidden" value=0>
+        </form>
+    <input type="submit" value="Backup" onclick="backupDB()">
 </div>
 
 

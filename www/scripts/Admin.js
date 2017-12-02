@@ -95,3 +95,10 @@ function updateUser()
 
     document.forms.UserPermissionsForm.submit();
 }
+
+function backupDB()
+{
+    let elem = document.getElementById('backup_db_action');
+    elem.value = 1;
+    document.forms.BackupDBForm.submit();
+}

@@ -2345,6 +2345,104 @@ class RedditSQLClient
     {
         $this->query('SET FOREIGN_KEY_CHECKS=1');
     }
+
+
+
+    public function backup()
+    {
+        $dir = __DIR__ . '/../' . 'Backups';
+        if (!file_exists($dir))
+        {
+            $oldmask  = umask(0);
+            mkdir($dir, 0744);
+            umask($oldmask);
+        }
+        $out = null;
+        //return shell_exec('whoami 2>&1');
+        exec("mysqldump --add-drop-table {$this->schema->Database()} -u".DBUSER." -p".DBPASS." 2>&1 1> {$dir}/RedditDB-Backup-".time().".sql", $out);
+        return var_export($out, true);
+        //" | gzip > RedditDB-Backup-".time().".sql.gz"
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $tables = array_column($this->query("
+            SHOW TABLES FROM {$this->schema->Database()};
+        ")->fetch_all(), 0);
+
+        // $file = fopen('db-backup-'.time().'.sql', 'w+');
+
+
+        foreach ($tables as $table)
+        {
+            // $q = $this->connection->prepare(
+            //     "SELECT * FROM {$this->schema->Database($table)};"
+            // ) or SQL_Exc($this->connection);
+
+            //$q->execute() or SQL_Exc($this->connection);
+            //$res = $q->get_result() or SQL_Exc($this->connection);;
+            //$num_f = $res->num_fields();
+
+            //$q->close();
+
+            
+
+            $ret .= "USE {$this->schema->Database()};\n";
+            $ret .= "DROP TABLE {$this->schema->Database($table)};";
+            $createQ = $this->query(
+                "SHOW CREATE TABLE {$this->schema->Database($table)};"
+            )->fetch_array();
+            $ret .= "\n\n{$createQ[1]};\n\n";
+
+            $r = $this->connection->query(
+                "SELECT * FROM {$this->schema->Database($table)};",
+                MYSQLI_USE_RESULT
+            );
+
+
+            $num_f = $r->field_count;
+
+            for ($i = 0; $i < $num_f; $i++)
+            {
+                while ($row = $r->fetch_array())
+                {
+                    $ret .= "INSERT INTO {$this->schema->Database($table)} VALUES (";
+                    for ($j = 0; $j < $num_f; $j++)
+                    {
+                        $row[$j] = addslashes($row[$j]);
+                        $row[$j] = str_replace("\n", "\\n", $row[$j]);
+                        if (isset($row[$j]))
+                        {
+                            $ret .= "\"{$row[$j]}\"";
+                        }
+                        else
+                        {
+                            $ret .= '""';
+                        }
+                        if ($j < ($num_f - 1))
+                        {
+                            $ret .= ',';
+                        }
+                    }
+                    $ret .= ");\n";
+                }
+            }
+
+            $ret .= "\n\n\n";
+
+            // fwrite($file, $ret);
+            // $ret = '';
+            $r->free();
+            $q->close();
+
+            echo strlen($ret) . '----';
+
+        }
+
+
+
+        return $ret;
+    }
 }
 
 
