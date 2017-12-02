@@ -111,23 +111,44 @@ if ($session->user->permissions['ManageUsers'] == true)
     Account Management
 </label>
 <div class="SectionBoxBordered">
-    <label style="text-align:center;width:100%">User Permissions</label>
-    <form id="user_permissions_form" name="UserPermissionsForm" role="form" method="post" action="" autocomplete="off" class="SectionBox">
-        <input id="update_user_username" name="update_user_username" type="text" placeholder="Username">
-        <br />
-        Manage Accounts
-        <input id="update_user_ManageUsers" name="update_user_ManageUsers" type="checkbox">
-        <br />
-        Backup Database
-        <input id="update_user_Backup" name="update_user_Backup" type="checkbox">
-        <br />
-        Restore Database
-        <input id="update_user_Restore" name="update_user_Restore" type="checkbox">
-        <br />
-        Edit Data
-        <input id="update_user_Edit" name="update_user_Edit" type="checkbox">
-    </form>
-    <input type="submit" value="UpdateUser" onclick="updateUser()">
+    <table class="ExpandTable">
+        <tr>
+            <td>
+                <label style="text-align:center;width:100%">User Permissions</label>
+                <form id="user_permissions_form" name="UserPermissionsForm" role="form" method="post" action="" autocomplete="off" class="SectionBox">
+                    <input id="update_user_username" name="update_user_username" type="text" placeholder="Username">
+                    <br />
+                    Manage Accounts
+                    <input id="update_user_ManageUsers" name="update_user_ManageUsers" type="checkbox">
+                    <br />
+                    Backup Database
+                    <input id="update_user_Backup" name="update_user_Backup" type="checkbox">
+                    <br />
+                    Restore Database
+                    <input id="update_user_Restore" name="update_user_Restore" type="checkbox">
+                    <br />
+                    Edit Data
+                    <input id="update_user_Edit" name="update_user_Edit" type="checkbox">
+                    <br />
+                    <input type="button" value="UpdateUser" onclick="updateUser()">
+                </form>
+                
+            </td>
+            <td>
+                <table border=1 style="width:auto;width:100%">
+                    <thead></thead>
+                    <tbody class="UsersTableBody">
+                        <?php
+                            foreach ($sql->getSiteUserNames() as $username)
+                            {
+                                echo '<tr class="UsersRow"><td class="UsersRow">' . $username . '</td></tr>';
+                            }
+                        ?>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
 </div>
 
 

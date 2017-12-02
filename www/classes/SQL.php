@@ -1442,6 +1442,26 @@ class RedditSQLClient
         return $comments;
     }
 
+    public function getSiteUserNames()
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                "SELECT username FROM {$this->schema->SiteUsersTable()} ORDER BY username;"
+            ) or SQL_Exc($this->connection);
+        }
+
+        $query->execute() or SQL_Exc($this->connection);
+        $res = array_column($query->get_result()->fetch_all(), 0);
+
+        return $res;
+    }
+
 
 
     function obliterateSubreddit($sub)

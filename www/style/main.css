@@ -49,3 +49,20 @@ a {
 	align-items: center;
 	padding-bottom: 10px;
 }
+
+.UsersTableBody
+{
+	display: block;
+	overflow-y: auto;
+	overflow-x: hidden;
+	height: 500px;
+	width: auto;
+	width: 100%;
+}
+
+.UsersRow
+{
+	width: auto;
+	width: 100%;
+	display: flex;
+}
