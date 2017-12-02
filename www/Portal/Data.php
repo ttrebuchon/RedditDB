@@ -308,7 +308,7 @@ function SubredditCol($name)
                                 foreach ($comments as $comment)
                                 {
                                     echo "<tr>";
-                                    echo "<td><a href='http://www.reddit.com{$comment['permalink']}'>{$post['id']}</a></td>";
+                                    echo "<td><a href='http://www.reddit.com{$comment['permalink']}'>{$comment['id']}</a></td>";
                                     echo AuthorCol($comment['author']);
                                     echo "<td>{$comment['time']}</td>";
                                     echo "<td>{$comment['title']}</td>";
