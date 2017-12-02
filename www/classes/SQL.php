@@ -1582,6 +1582,123 @@ class RedditSQLClient
         return $posts;
     }
 
+    public function addWatchedPosts($username, $ids)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        if (count($ids) <= 0)
+        {
+            return;
+        }
+
+        static $idQuery = null;
+        if ($idQuery == null)
+        {
+            $idQuery = $this->connection->prepare("
+                SELECT id FROM {$this->schema->SiteUsersTable()}
+                    WHERE username=? LIMIT 1;
+            ") or SQL_Exc($this->connection);
+        }
+
+        $idQuery->bind_param('s', $username);
+        $idQuery->execute() or SQL_Exc($this->connection);
+        $id = $idQuery->get_result()->fetch_array()[0];
+
+        $idParameters = "(?";
+        for ($i = 1; $i < count($ids); $i = $i + 1)
+        {
+            $idParameters = $idParameters . ', ?';
+        }
+
+        $idParameters = $idParameters . ')';
+        $paramString = 'i' . str_repeat('s', count($ids));
+
+        $checkQuery = $this->connection->prepare("
+            SELECT post_id FROM {$this->schema->WatchedPostsTable()}
+                WHERE user_id=? AND post_id IN {$idParameters}
+            ;
+        ") or SQL_Exc($this->connection);
+
+        $params = [];
+        $params[] =& $id;
+        foreach ($ids as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($checkQuery, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $checkQuery->execute() or SQL_Exc($this->connection);
+
+        $res = $checkQuery->get_result();
+
+        
+        if (gettype($res) != 'boolean')
+        {
+            $existing = array_column($res->fetch_all(), 0);
+            $ids = array_diff($ids, $existing);
+        }
+
+        
+
+
+
+        if (count($ids) <= 0)
+        {
+            return;
+        }
+
+
+
+        $idParameters = "(?";
+        for ($i = 1; $i < count($ids); $i = $i + 1)
+        {
+            $idParameters = $idParameters . ', ?';
+        }
+
+        $idParameters = $idParameters . ')';
+        $paramString = str_repeat('s', count($ids));
+        
+
+        $query = $this->connection->prepare("
+            INSERT INTO {$this->schema->WatchedPostsTable()}
+            (user_id, post_id)
+            SELECT {$id}, id FROM {$this->schema->PostsTable()}
+                WHERE id IN {$idParameters};
+        ") or SQL_Exc($this->connection);
+
+
+        $params = [];
+        foreach ($ids as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($query, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            SQL_Exc($this->connection);
+        }
+
+        $query->execute() or SQL_Exc($this->connection);
+    }
+
     public function GetWatchedComments($name)
     {
         if (!$this->isOpen()) {
@@ -1683,6 +1800,123 @@ class RedditSQLClient
         
 
         return $comments;
+    }
+
+    public function addWatchedComments($username, $ids)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        if (count($ids) <= 0)
+        {
+            return;
+        }
+
+        static $idQuery = null;
+        if ($idQuery == null)
+        {
+            $idQuery = $this->connection->prepare("
+                SELECT id FROM {$this->schema->SiteUsersTable()}
+                    WHERE username=? LIMIT 1;
+            ") or SQL_Exc($this->connection);
+        }
+
+        $idQuery->bind_param('s', $username);
+        $idQuery->execute() or SQL_Exc($this->connection);
+        $id = $idQuery->get_result()->fetch_array()[0];
+
+        $idParameters = "(?";
+        for ($i = 1; $i < count($ids); $i = $i + 1)
+        {
+            $idParameters = $idParameters . ', ?';
+        }
+
+        $idParameters = $idParameters . ')';
+        $paramString = 'i' . str_repeat('s', count($ids));
+
+        $checkQuery = $this->connection->prepare("
+            SELECT comment_id FROM {$this->schema->WatchedCommentsTable()}
+                WHERE user_id=? AND comment_id IN {$idParameters}
+            ;
+        ") or SQL_Exc($this->connection);
+
+        $params = [];
+        $params[] =& $id;
+        foreach ($ids as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($checkQuery, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $checkQuery->execute() or SQL_Exc($this->connection);
+
+        $res = $checkQuery->get_result();
+
+        
+        if (gettype($res) != 'boolean')
+        {
+            $existing = array_column($res->fetch_all(), 0);
+            $ids = array_diff($ids, $existing);
+        }
+
+        
+
+
+
+        if (count($ids) <= 0)
+        {
+            return;
+        }
+
+
+
+        $idParameters = "(?";
+        for ($i = 1; $i < count($ids); $i = $i + 1)
+        {
+            $idParameters = $idParameters . ', ?';
+        }
+
+        $idParameters = $idParameters . ')';
+        $paramString = str_repeat('s', count($ids));
+        
+
+        $query = $this->connection->prepare("
+            INSERT INTO {$this->schema->WatchedCommentsTable()}
+            (user_id, comment_id)
+            SELECT {$id}, id FROM {$this->schema->CommentsTable()}
+                WHERE id IN {$idParameters};
+        ") or SQL_Exc($this->connection);
+
+
+        $params = [];
+        foreach ($ids as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($query, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            SQL_Exc($this->connection);
+        }
+
+        $query->execute() or SQL_Exc($this->connection);
     }
 
     public function getSiteUserNames()

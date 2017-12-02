@@ -239,19 +239,18 @@ function SubredditCol($name)
                     <?php
                             if ($searched)
                             {
-                                foreach (
-                                    $sql->dataSearch_Posts(
-                                        htmlspecialchars($_POST['Subreddits_Search']),
-                                        htmlspecialchars($_POST['Users_Name_Search']),
-                                        htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
-                                        htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
-                                        htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
-                                        htmlspecialchars($_POST['Users_LinkScore_LTE_Search']),
-                                        htmlspecialchars($_POST['Posts_Title_Search']),
-                                        htmlspecialchars($_POST['Posts_Score_GTE_Search']),
-                                        htmlspecialchars($_POST['Posts_Score_LTE_Search'])
-                                        )
-                                    as $post)
+                                $posts = $sql->dataSearch_Posts(
+                                    htmlspecialchars($_POST['Subreddits_Search']),
+                                    htmlspecialchars($_POST['Users_Name_Search']),
+                                    htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
+                                    htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
+                                    htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
+                                    htmlspecialchars($_POST['Users_LinkScore_LTE_Search']),
+                                    htmlspecialchars($_POST['Posts_Title_Search']),
+                                    htmlspecialchars($_POST['Posts_Score_GTE_Search']),
+                                    htmlspecialchars($_POST['Posts_Score_LTE_Search'])
+                                );
+                                foreach ($posts as $post)
                                 {
                                     echo "<tr>";
                                     echo "<td><a href='http://www.reddit.com{$post['permalink']}'>{$post['id']}</a></td>";
@@ -261,6 +260,13 @@ function SubredditCol($name)
                                     echo SubredditCol($post['subreddit_name']);
                                     echo "<td>{$post['score']}</td>";
                                     echo "</tr>";
+                                }
+
+                                if ($_POST['Watch_Posts_Action'] == 1)
+                                {
+                                    $sql->addWatchedPosts(
+                                        $session->user->name,
+                                        array_column($posts, 'id'));
                                 }
                             }
                         ?>
@@ -286,30 +292,36 @@ function SubredditCol($name)
                     <?php
                             if ($searched)
                             {
-                                foreach (
-                                    $sql->dataSearch_Comments(
-                                        htmlspecialchars($_POST['Subreddits_Search']),
-                                        htmlspecialchars($_POST['Users_Name_Search']),
-                                        htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
-                                        htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
-                                        htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
-                                        htmlspecialchars($_POST['Users_LinkScore_LTE_Search']),
-                                        htmlspecialchars($_POST['Posts_Title_Search']),
-                                        htmlspecialchars($_POST['Posts_Score_GTE_Search']),
-                                        htmlspecialchars($_POST['Posts_Score_LTE_Search']),
-                                        htmlspecialchars($_POST['Comments_Score_GTE_Search']),
-                                        htmlspecialchars($_POST['Comments_Score_LTE_Search'])
-                                        )
-                                    as $post)
+                                $comments = $sql->dataSearch_Comments(
+                                    htmlspecialchars($_POST['Subreddits_Search']),
+                                    htmlspecialchars($_POST['Users_Name_Search']),
+                                    htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
+                                    htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
+                                    htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
+                                    htmlspecialchars($_POST['Users_LinkScore_LTE_Search']),
+                                    htmlspecialchars($_POST['Posts_Title_Search']),
+                                    htmlspecialchars($_POST['Posts_Score_GTE_Search']),
+                                    htmlspecialchars($_POST['Posts_Score_LTE_Search']),
+                                    htmlspecialchars($_POST['Comments_Score_GTE_Search']),
+                                    htmlspecialchars($_POST['Comments_Score_LTE_Search'])
+                                );
+                                foreach ($comments as $comment)
                                 {
                                     echo "<tr>";
-                                    echo "<td><a href='http://www.reddit.com{$post['permalink']}'>{$post['id']}</a></td>";
-                                    echo AuthorCol($post['author']);
-                                    echo "<td>{$post['time']}</td>";
-                                    echo "<td>{$post['title']}</td>";
-                                    echo SubredditCol($post['subreddit_name']);
-                                    echo "<td>{$post['score']}</td>";
+                                    echo "<td><a href='http://www.reddit.com{$comment['permalink']}'>{$post['id']}</a></td>";
+                                    echo AuthorCol($comment['author']);
+                                    echo "<td>{$comment['time']}</td>";
+                                    echo "<td>{$comment['title']}</td>";
+                                    echo SubredditCol($comment['subreddit_name']);
+                                    echo "<td>{$comment['score']}</td>";
                                     echo "</tr>";
+                                }
+
+                                if ($_POST['Watch_Comments_Action'] == 1)
+                                {
+                                    $sql->addWatchedComments(
+                                        $session->user->name,
+                                        array_column($comments, 'id'));
                                 }
                             }
                         ?>
