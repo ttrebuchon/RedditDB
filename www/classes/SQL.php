@@ -1226,6 +1226,123 @@ class RedditSQLClient
         return $users;
     }
 
+    public function addWatchedUsers($username, $names)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        if (count($names) <= 0)
+        {
+            return;
+        }
+
+        static $idQuery = null;
+        if ($idQuery == null)
+        {
+            $idQuery = $this->connection->prepare("
+                SELECT id FROM {$this->schema->SiteUsersTable()}
+                    WHERE username=? LIMIT 1;
+            ") or SQL_Exc($this->connection);
+        }
+
+        $idQuery->bind_param('s', $username);
+        $idQuery->execute() or SQL_Exc($this->connection);
+        $id = $idQuery->get_result()->fetch_array()[0];
+
+        $nameParameters = "(?";
+        for ($i = 1; $i < count($names); $i = $i + 1)
+        {
+            $nameParameters = $nameParameters . ', ?';
+        }
+
+        $nameParameters = $nameParameters . ')';
+        $paramString = 'i' . str_repeat('s', count($names));
+
+        $checkQuery = $this->connection->prepare("
+            SELECT reddit_user FROM {$this->schema->WatchedUsersTable()}
+                WHERE user_id=? AND reddit_user IN {$nameParameters}
+            ;
+        ") or SQL_Exc($this->connection);
+
+        $params = [];
+        $params[] =& $id;
+        foreach ($names as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($checkQuery, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            throw new Exception(htmlspecialchars($stmt->error));
+        }
+
+        $checkQuery->execute() or SQL_Exc($this->connection);
+
+        $res = $checkQuery->get_result();
+
+        
+        if (gettype($res) != 'boolean')
+        {
+            $existing = array_column($res->fetch_all(), 0);
+            $names = array_diff($names, $existing);
+        }
+
+        
+
+
+
+        if (count($names) <= 0)
+        {
+            return;
+        }
+
+
+
+        $nameParameters = "(?";
+        for ($i = 1; $i < count($names); $i = $i + 1)
+        {
+            $nameParameters = $nameParameters . ', ?';
+        }
+
+        $nameParameters = $nameParameters . ')';
+        $paramString = str_repeat('s', count($names));
+        
+
+        $query = $this->connection->prepare("
+            INSERT INTO {$this->schema->WatchedUsersTable()}
+            (user_id, reddit_user)
+            SELECT {$id}, user_name FROM {$this->schema->UsersTable()}
+                WHERE user_name IN {$nameParameters};
+        ") or SQL_Exc($this->connection);
+
+
+        $params = [];
+        foreach ($names as $key => &$value) {
+            $params[] =& $value;
+        }
+
+        $rc = call_user_func_array(
+            array($query, "bind_param"),
+            array_merge(
+                array($paramString),
+                $params
+            )
+        );
+
+        if (false === $rc) {
+            SQL_Exc($this->connection);
+        }
+
+        $query->execute() or SQL_Exc($this->connection);
+    }
+
     public function GetWatchedSubreddits($name)
     {
         if (!$this->isOpen()) {

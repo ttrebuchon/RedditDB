@@ -192,21 +192,27 @@ function SubredditCol($name)
                                     $_POST['Users_LinkScore_GTE_Search'] !== '' || 
                                     $_POST['Users_LinkScore_LTE_Search'] !== '')
                                 {
-                                    foreach (
-                                        $sql->dataSearch_Users(
-                                            htmlspecialchars($_POST['Users_Name_Search']),
-                                            htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
-                                            htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
-                                            htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
-                                            htmlspecialchars($_POST['Users_LinkScore_LTE_Search'])
-                                            )
-                                        as $usr)
+                                    $users = $sql->dataSearch_Users(
+                                        htmlspecialchars($_POST['Users_Name_Search']),
+                                        htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
+                                        htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
+                                        htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
+                                        htmlspecialchars($_POST['Users_LinkScore_LTE_Search'])
+                                    );
+                                    foreach ($users as $usr)
                                     {
                                         echo "<tr>";
                                         echo AuthorCol($usr['user_name']);
                                         echo "<td>{$usr['comment_score']}</td>";
                                         echo "<td>{$usr['link_score']}</td>";
                                         echo "</tr>";
+                                    }
+
+                                    if ($_POST['Watch_Users_Action'] == 1)
+                                    {
+                                        $sql->addWatchedUsers(
+                                            $session->user->name,
+                                            array_column($users, 'user_name'));
                                     }
                                 }
                             }
