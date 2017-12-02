@@ -1658,7 +1658,8 @@ class RedditSQLClient
         {
             $query = $this->connection->prepare(
                 "SELECT id, author, title, score, link,
-                subreddit_name, creation_timestamp AS time
+                subreddit_name, creation_timestamp AS time,
+                permalink
                 FROM {$this->schema->PostsTable()}
                 JOIN {$this->schema->SubredditsTable()}
                 ON {$this->schema->PostsTable('subreddit_id')}
@@ -1696,6 +1697,130 @@ class RedditSQLClient
             $title_param,
             $pmin,
             $pmax);
+        $query->execute() or SQL_Exc($this->connection);
+        $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        return $res;
+    }
+
+    public function dataSearch_Comments(
+                $sub,
+                $user_name,
+                $comment_gte,
+                $comment_lte,
+                $link_gte,
+                $link_lte,
+                $title,
+                $pscore_lte,
+                $pscore_gte,
+                $cscore_lte,
+                $cscore_gte)
+    {
+        if (!$this->isOpen()) {
+            Exc("Connection has not been opened!");
+        }
+
+        $cmax = (int)$comment_lte;
+        if ($comment_lte === '')
+        {
+            $cmax = 2147483647;
+        }
+
+        $cmin = (int)$comment_gte;
+        if ($comment_gte === '')
+        {
+            $cmin = -2147483648;
+        }
+
+        $lmax = (int)$link_lte;
+        if ($link_lte === '')
+        {
+            $lmax = 2147483647;
+        }
+
+        $lmin = (int)$link_gte;
+        if ($link_gte === '')
+        {
+            $lmin = -2147483648;
+        }
+
+        $pmax = (int)$pscore_lte;
+        if ($pscore_lte === '')
+        {
+            $pmax = 2147483647;
+        }
+
+        $pmin = (int)$pscore_gte;
+        if ($pscore_gte === '')
+        {
+            $pmin = -2147483648;
+        }
+
+        $comax = (int)$cscore_lte;
+        if ($cscore_lte === '')
+        {
+            $comax = 2147483647;
+        }
+
+        $comin = (int)$cscore_gte;
+        if ($cscore_gte === '')
+        {
+            $comin = -2147483648;
+        }
+
+        
+
+        static $query = null;
+        if ($query == null)
+        {
+            $query = $this->connection->prepare(
+                "SELECT C.id, C.author, C.score, 
+                /*C.creation_timestamp AS time,*/
+                P.title, C.permalink, P.subreddit_name
+                FROM {$this->schema->CommentsTable()} AS C
+                JOIN
+                
+                (SELECT id, title, permalink, subreddit_name
+                FROM {$this->schema->PostsTable()}
+                JOIN {$this->schema->SubredditsTable()}
+                ON {$this->schema->PostsTable('subreddit_id')}
+                =
+                {$this->schema->SubredditsTable('subreddit_id')}
+                    WHERE
+                    subreddit_name LIKE ? AND
+                    title LIKE ? AND
+                    score >= ? AND
+                    score <= ?
+                ) AS P
+                ON C.post_id = P.id
+                WHERE
+                    C.author IN
+                    (
+                        SELECT user_name
+                        FROM {$this->schema->UsersTable()}
+                            WHERE user_name LIKE ? AND 
+                                comment_score <= ? AND 
+                                comment_score >= ? AND 
+                                link_score <= ? AND 
+                                link_score >= ?
+                    )
+                ORDER BY id
+                LIMIT 10000;"
+            ) or SQL_Exc($this->connection);
+        }
+        $sub_param = '%' . $sub . '%';
+        $username_param = '%' . $user_name . '%';
+        $title_param = '%' . $title . '%';
+        $query->bind_param('ssiisiiii',
+            $sub_param,
+            $title_param,
+            $pmin,
+            $pmax,
+            $username_param,
+            $cmax,
+            $cmin,
+            $lmax,
+            $lmin);
         $query->execute() or SQL_Exc($this->connection);
         $res = $query->get_result()->fetch_all(MYSQLI_ASSOC);
 

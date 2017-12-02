@@ -18,8 +18,25 @@ foreach ($_POST as $param)
 
 if ($searched)
 {
-    echo 'Searched!';
+    //If uncommented, there are no confirmations for form resubmissions,
+    //but search data will be cleared between refreshes
 
+    // echo "
+    // <script>
+    //     window.onload = function() {
+    //         history.replaceState('', '', '/Portal/Data.php');
+    //     };
+    // </script>";
+}
+
+function AuthorCol($name)
+{
+    return "<td><a href='http://www.reddit.com/u/{$name}'>{$name}</a></td>";
+}
+
+function SubredditCol($name)
+{
+    return "<td><a href='http://www.reddit.com/r/{$name}'>/r/{$name}</a></td>";
 }
 
 ?>
@@ -116,7 +133,7 @@ if ($searched)
                                             )
                                         as $sub)
                                     {
-                                        echo "<tr><td>{$sub}</td></tr>";
+                                        echo "<tr><td><a href='http://www.reddit.com/r/{$sub}'>/r/{$sub}</a></td></tr>";
                                     }
                                 }
                             }
@@ -157,7 +174,7 @@ if ($searched)
                                         as $usr)
                                     {
                                         echo "<tr>";
-                                        echo "<td>{$usr['user_name']}</td>";
+                                        echo AuthorCol($usr['user_name']);
                                         echo "<td>{$usr['comment_score']}</td>";
                                         echo "<td>{$usr['link_score']}</td>";
                                         echo "</tr>";
@@ -202,11 +219,11 @@ if ($searched)
                                     as $post)
                                 {
                                     echo "<tr>";
-                                    echo "<td>{$post['id']}</td>";
-                                    echo "<td>{$post['author']}</td>";
+                                    echo "<td><a href='http://www.reddit.com{$post['permalink']}'>{$post['id']}</a></td>";
+                                    echo AuthorCol($post['author']);
                                     echo "<td>{$post['time']}</td>";
-                                    echo "<td>{$post['title']}</td>";
-                                    echo "<td>{$post['subreddit_name']}</td>";
+                                    echo "<td><a href='http://www.reddit.com{$post['permalink']}'>{$post['title']}</a></td>";
+                                    echo SubredditCol($post['subreddit_name']);
                                     echo "<td>{$post['score']}</td>";
                                     echo "</tr>";
                                 }
@@ -227,26 +244,40 @@ if ($searched)
                             <td><b>Time</b></td>
                             <td><b>Post</b></td>
                             <td><b>Subreddit</b></td>
+                            <td><b>Score</b></td>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                ID
-                            </td>
-                            <td>
-                                Author
-                            </td>
-                            <td>
-                                Time
-                            </td>
-                            <td>
-                                Post
-                            </td>
-                            <td>
-                                Subreddit
-                            </td>
-                        </tr>
+                    <?php
+                            if ($searched)
+                            {
+                                foreach (
+                                    $sql->dataSearch_Comments(
+                                        htmlspecialchars($_POST['Subreddits_Search']),
+                                        htmlspecialchars($_POST['Users_Name_Search']),
+                                        htmlspecialchars($_POST['Users_CommentScore_GTE_Search']),
+                                        htmlspecialchars($_POST['Users_CommentScore_LTE_Search']),
+                                        htmlspecialchars($_POST['Users_LinkScore_GTE_Search']),
+                                        htmlspecialchars($_POST['Users_LinkScore_LTE_Search']),
+                                        htmlspecialchars($_POST['Posts_Title_Search']),
+                                        htmlspecialchars($_POST['Posts_Score_GTE_Search']),
+                                        htmlspecialchars($_POST['Posts_Score_LTE_Search']),
+                                        htmlspecialchars($_POST['Comments_Score_GTE_Search']),
+                                        htmlspecialchars($_POST['Comments_Score_LTE_Search'])
+                                        )
+                                    as $post)
+                                {
+                                    echo "<tr>";
+                                    echo "<td><a href='http://www.reddit.com{$post['permalink']}'>{$post['id']}</a></td>";
+                                    echo AuthorCol($post['author']);
+                                    echo "<td>{$post['time']}</td>";
+                                    echo "<td>{$post['title']}</td>";
+                                    echo SubredditCol($post['subreddit_name']);
+                                    echo "<td>{$post['score']}</td>";
+                                    echo "</tr>";
+                                }
+                            }
+                        ?>
                     </tbody>
                 </table>
             </div>
