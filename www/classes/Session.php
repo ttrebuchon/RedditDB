@@ -50,6 +50,7 @@ class Session
                 $this->user->name = $username;
                 $_SESSION['username'] = $this->user->name;
                 $_SESSION['loggedin'] = true;
+                $this->RefreshData();
             }
             else
             {
